@@ -1,0 +1,23 @@
+cachedir: cache
+references:
+    gatkbundle:
+        link:   /fdb/GATK_resource_bundle/hg38-v0
+        path:   reference/hg38
+    gatkbundlesup:
+        link:   /fdb/GATK_resource_bundle/hg38
+        path:   reference/hg38-sup
+    scramble:
+        link:   /data/yuk5/pipeline/wgs_germline/ref/SCRAMBLE
+        path:   reference/SCRAMBLE
+    gridss:
+        link:   /data/yuk5/pipeline/wgs_germline/gridss
+        path:   reference/gridss
+    delly:
+        link:   /data/yuk5/pipeline/wgs_germline/delly
+        path:   reference/delly
+    pon:
+        link:   /data/yuk5/data/PanelOfNormal/wgs_nygc112.v1
+        path:   reference/pon
+    blacklist:
+        link:   /data/yuk5/data/Blacklist/General_hg38_230721
+        path:   reference/blacklist

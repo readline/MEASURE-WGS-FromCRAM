@@ -1,1 +1,2 @@
-# MEASURE-WGS-FromCRAM
+# snakemake_framework
+Snake make framework as a template
