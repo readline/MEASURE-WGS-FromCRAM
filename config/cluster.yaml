@@ -1,12 +1,13 @@
 __default__:
-    partition: norm
-    time: '1-00:00:00'
-    mem: 16
-    extra: "--gres=lscratch:20"
-
-bwa_mem:
-    time: '1-00:00:00'
     partition: 'norm'
-    #out: 'logs/BWA.{run}.log'
-    #error: 'logs/BWA.{run}.err'
-    extra: ' --gres=lscratch:40 '
+    threads: 8
+    mem: '16g'
+    time: '1-00:00:00'
+    extra: ' --gres=lscratch:20'
+
+cram__check_md5:
+    partition: 'norm'
+    threads: 8
+    mem: '16g'
+    time: '1-00:00:00'
+    extra: ' --gres=lscratch:20'
