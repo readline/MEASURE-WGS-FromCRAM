@@ -11,3 +11,17 @@ cram__check_md5:
     mem: '16g'
     time: '1-00:00:00'
     extra: ' --gres=lscratch:20'
+
+cram__to_bam:
+    partition: 'norm'
+    threads: 8
+    mem: '16g'
+    time: '1-00:00:00'
+    extra: ' --gres=lscratch:20'
+
+cram__to_chrm:
+    partition: 'norm'
+    threads: 8
+    mem: '16g'
+    time: '1-00:00:00'
+    extra: ' --gres=lscratch:20'
