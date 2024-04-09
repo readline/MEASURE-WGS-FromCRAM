@@ -6,11 +6,12 @@ def samplesheet(sspath):
     '''
     Input:
     Sample sheet with following columns:
-    SAMPLE	PATIENT	GENDER  EVENT	SID	CRAM	MD5
+    SAMPLE	PATIENT	GENDER  EVENT	SID	RUN	CRAM	MD5
     
     Output:
-    samples:  dict={SAMPLE:{PATIENT:***, GENDER:M/F/U, EVENT:TOD/CR, SID:***, CRAM:***, MD5:***}, ...}
-    patients: dict={PATIENT:{EVENT:SAMPLE}, ...}
+    dic_patient_to_eventsamples:    dict={PATIENT:{EVENT:SAMPLE}, ...}
+    dic_sample_to_runs:             dict={SAMPLE:[SAMPLE.RUN, SAMPLE.RUN, ...]}
+    dic_run:                        dict={SAMPLE.RUN:{SAMPLE:***, PATIENT:***, GENDER:M/F/U, EVENT:TOD/CR, SID:***, CRAM:***, MD5:***}, }
     tasks:    dict={
         germline:[SAMPLE, SAMPLE, ...], 
         somatic_ss:[SAMPLE, SAMPLE, ...], 
