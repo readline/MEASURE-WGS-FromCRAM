@@ -17,17 +17,21 @@ def samplesheet(sspath):
         somatic_paired:[[SAMPLE|TOD, SAMPLE|CR], ...]
     }
     '''
-    df = pd.read_csv(sspath, sep='\t', index_col=0)
+    df = pd.read_csv(sspath, sep='\t')
     patients = {}
     samples = {}
     tasks = {'germline':[],'somatic_ss':[], 'somatic_paired':[]}
-    for s in df.index:
+    for i in df.index:
+        s = df.loc[i,'SAMPLE']
+        r = df.loc[i,'RUN']
         tasks['germline'].append(s)
-        p = df.loc[s,'PATIENT']
-        e = df.loc[s,'EVENT']
+        p = df.loc[i,'PATIENT']
+        e = df.loc[i,'EVENT']
         if p not in patients:
             patients[p] = {}
-        samples[s] = df.loc[s].to_dict()
+        if s not in samples:
+            samples[s] = {}
+        samples[s][r] = df.loc[i].to_dict()
         patients[p][e] = s
     for p in patients:
         if 'TOD' in patients[p]:
