@@ -18,32 +18,37 @@ def samplesheet(sspath):
     }
     '''
     df = pd.read_csv(sspath, sep='\t')
-    patients = {}
-    samples = {}
+    dic_patient_to_eventsamples = {}
+    dic_sample_to_runs = {}
+    dic_run = {}
     tasks = {'germline':[],'somatic_ss':[], 'somatic_paired':[]}
     for i in df.index:
         s = df.loc[i,'SAMPLE']
         r = df.loc[i,'RUN']
+        sr = '%s.%s'%(s,r)
         tasks['germline'].append(s)
         p = df.loc[i,'PATIENT']
         e = df.loc[i,'EVENT']
-        if p not in patients:
-            patients[p] = {}
-        if s not in samples:
-            samples[s] = {}
-        samples[s][r] = df.loc[i].to_dict()
-        patients[p][e] = s
-    for p in patients:
-        if 'TOD' in patients[p]:
-            if 'CR' in patients[p]:
-                tasks['somatic_paired'].append([patients[p]['TOD'], patients[p]['CR']])
+        if p not in dic_patient_to_eventsamples:
+            dic_patient_to_eventsamples[p] = {}
+        if s not in dic_sample_to_runs:
+            dic_sample_to_runs[s] = []
+        dic_run[sr] = df.loc[i].to_dict()
+        dic_patient_to_eventsamples[p][e] = s
+        dic_sample_to_runs[s].append(sr)
+    for p in dic_patient_to_eventsamples:
+        if 'TOD' in dic_patient_to_eventsamples[p]:
+            if 'CR' in dic_patient_to_eventsamples[p]:
+                tasks['somatic_paired'].append([dic_patient_to_eventsamples[p]['TOD'], dic_patient_to_eventsamples[p]['CR']])
             else:
-                tasks['somatic_ss'].append(patients[p]['TOD'])
-    return samples, patients, tasks
+                tasks['somatic_ss'].append(dic_patient_to_eventsamples[p]['TOD'])
+    return dic_patient_to_eventsamples, dic_sample_to_runs, dic_run, tasks
 
 def test_samplesheet():
     sspath='%s/../sample_sheet.txt'%(os.path.dirname(os.path.abspath(__file__)))
-    print(samplesheet(sspath))
+    for i in samplesheet(sspath):
+        print(i)
+        print()
     
 if __name__ == '__main__':
     test_samplesheet()
