@@ -21,6 +21,7 @@ def samplesheet(sspath):
     df = pd.read_csv(sspath, sep='\t')
     dic_patient_to_eventsamples = {}
     dic_sample_to_runs = {}
+    dic_sample_to_patient = {}
     dic_run = {}
     tasks = {'germline':[],'somatic_ss':[], 'somatic_paired':[]}
     for i in df.index:
@@ -36,6 +37,7 @@ def samplesheet(sspath):
             dic_sample_to_runs[s] = []
         dic_run[sr] = df.loc[i].to_dict()
         dic_patient_to_eventsamples[p][e] = s
+        dic_sample_to_patient[s] = p
         dic_sample_to_runs[s].append(sr)
     for p in dic_patient_to_eventsamples:
         if 'TOD' in dic_patient_to_eventsamples[p]:
@@ -43,7 +45,7 @@ def samplesheet(sspath):
                 tasks['somatic_paired'].append([dic_patient_to_eventsamples[p]['TOD'], dic_patient_to_eventsamples[p]['CR']])
             else:
                 tasks['somatic_ss'].append(dic_patient_to_eventsamples[p]['TOD'])
-    return dic_patient_to_eventsamples, dic_sample_to_runs, dic_run, tasks
+    return dic_patient_to_eventsamples, dic_sample_to_runs, dic_run, dic_sample_to_patient, tasks
 
 def test_samplesheet():
     sspath='%s/../sample_sheet.txt'%(os.path.dirname(os.path.abspath(__file__)))
