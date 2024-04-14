@@ -2,10 +2,17 @@ __default__:
     partition: 'norm'
     threads: 8
     mem: '16g'
-    time: '1-00:00:00'
+    time: '2-00:00:00'
     extra: ' --gres=lscratch:20'
 
 cram__check_md5:
+    partition: 'norm'
+    threads: 8
+    mem: '16g'
+    time: '1-00:00:00'
+    extra: ' --gres=lscratch:20'
+
+merge_sample_cram:
     partition: 'norm'
     threads: 8
     mem: '16g'
@@ -16,7 +23,7 @@ cram__to_bam:
     partition: 'norm'
     threads: 8
     mem: '16g'
-    time: '1-00:00:00'
+    time: '2-00:00:00'
     extra: ' --gres=lscratch:20'
 
 cram__to_chrm:
@@ -25,3 +32,156 @@ cram__to_chrm:
     mem: '16g'
     time: '1-00:00:00'
     extra: ' --gres=lscratch:20'
+
+cramqc__flagstat:
+    partition: 'norm'
+    threads: 8
+    mem: '16g'
+    time: '1-00:00:00'
+    extra: ' --gres=lscratch:20'
+
+cramqc__collect_quality_yield_metrics:
+    partition: 'norm'
+    threads: 2
+    mem: '8g'
+    time: '2-00:00:00'
+    extra: ' --gres=lscratch:20'
+
+cramqc__collect_wgs_metrics:
+    partition: 'norm'
+    threads: 2
+    mem: '8g'
+    time: '2-00:00:00'
+    extra: ' --gres=lscratch:20'
+
+cramqc__collect_all_reads_multiple_metrics:
+    partition: 'norm'
+    threads: 2
+    mem: '8g'
+    time: '2-00:00:00'
+    extra: ' --gres=lscratch:20'
+
+cramqc__collect_read_groups_multiple_metrics:
+    partition: 'norm'
+    threads: 2
+    mem: '8g'
+    time: '2-00:00:00'
+    extra: ' --gres=lscratch:20'
+
+cramqc__collect_aggregation_metrics:
+    partition: 'norm'
+    threads: 2
+    mem: '8g'
+    time: '2-00:00:00'
+    extra: ' --gres=lscratch:20'
+
+cramqc__mosdepth:
+    partition: 'norm'
+    threads: 8
+    mem: '16g'
+    time: '2-00:00:00'
+    extra: ' --gres=lscratch:50'
+
+cramqc__summary_metrics:
+    partition: 'norm'
+    threads: 2
+    mem: '4g'
+    time: '02:00:00'
+
+germline__deepvariant1:
+    partition: 'norm'
+    threads: 2
+    mem: '4g'
+    time: '2-00:00:00'
+    extra: ' --gres=lscratch:20'
+
+germline__deepvariant2:
+    partition: 'gpu'
+    threads: 12
+    mem: '48g'
+    time: '2-00:00:00'
+    extra: " --gres=lscratch:40,gpu:1 --constraint='gpua100|gpuv100|gpuv100x'"
+
+germline__deepvariant3:
+    partition: 'gpu'
+    threads: 24
+    mem: '96g'
+    time: '2-00:00:00'
+    extra: " --gres=lscratch:40,gpu:1 --constraint='gpua100|gpuv100|gpuv100x'"
+
+germline__strelka:
+    partition: 'norm'
+    threads: 24
+    mem: '48g'
+    time: '2-00:00:00'
+    extra: ' --gres=lscratch:50'
+
+germline__manta:
+    partition: 'norm'
+    threads: 24
+    mem: '48g'
+    time: '2-00:00:00'
+    extra: ' --gres=lscratch:50'
+
+germline__gridss_preprocess:
+    partition: 'norm'
+    threads: 8
+    mem: '32g'
+    time: '2-00:00:00'
+    extra: ' --gres=lscratch:50'
+
+germline__gridss_assemble:
+    partition: 'norm'
+    threads: 8
+    mem: '48g'
+    time: '2-00:00:00'
+    extra: ' --gres=lscratch:50'
+
+germline__gridss_call:
+    partition: 'norm'
+    threads: 8
+    mem: '32g'
+    time: '2-00:00:00'
+    extra: ' --gres=lscratch:50'
+
+germline__tiddit:
+    partition: 'norm'
+    threads: 24
+    mem: '192g'
+    time: '2-00:00:00'
+    extra: ' --gres=lscratch:50'
+
+germline__melt_ins:
+    partition: 'norm'
+    threads: 4
+    mem: '48g'
+    time: '2-00:00:00'
+    extra: ' --gres=lscratch:50'
+
+germline__melt_del1:
+    partition: 'norm'
+    threads: 4
+    mem: '48g'
+    time: '2-00:00:00'
+    extra: ' --gres=lscratch:50'
+
+germline__melt_del2:
+    partition: 'norm'
+    threads: 4
+    mem: '48g'
+    time: '2-00:00:00'
+    extra: ' --gres=lscratch:50'
+
+germline__msi_msisensorpro:
+    partition: 'norm'
+    threads: 4
+    mem: '48g'
+    time: '2-00:00:00'
+    extra: ' --gres=lscratch:50'
+
+germline__hlala:
+    partition: 'norm'
+    threads: 4
+    mem: '48g'
+    time: '2-00:00:00'
+    extra: ' --gres=lscratch:50'
