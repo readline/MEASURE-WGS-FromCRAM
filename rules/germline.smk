@@ -1,5 +1,14 @@
 from scripts.utils import allocated,ignore
 
+itv50 = ['%.4d'%i for i in range(1,config['parameter']['gatkitv']+1)]
+
+def generate_germline__gatk_hcmerge_input_gvcf(wildcards):
+    return expand(join(config['workdir'], "10.germline_snv_gatk", "{sample}", "itvs", "{sample}.{itv}.vcf.gz"), sample=wildcards.sample, itv=itv50)
+
+def generate_germline__gatk_hcmerge_input_bam(wildcards):
+    return expand(join(config['workdir'], "10.germline_snv_gatk", "{sample}", "itvs", "{sample}.{itv}.vcf.bam"), sample=wildcards.sample, itv=itv50)
+
+
 rule germline__deepvariant1:
     input:
         cram = join(config['workdir'], "01.cram", "{sample}", "{sample}.cram"),
@@ -22,7 +31,7 @@ rule germline__deepvariant1:
     shell:
         "/opt/deepvariant/bin/make_examples"
         "  --mode calling"
-        "  --ref {config[references][gatkbundle][path]}/Homo_sapiens_assembly38.fasta"
+        "  --ref {config[references][gatkbundle]}/Homo_sapiens_assembly38.fasta"
         "  --reads {input.cram}"
         "  --gvcf {params.dv1a}"
         "  --examples {params.dv1b}"
@@ -87,21 +96,262 @@ rule germline__deepvariant3:
     shell:
         "singularity exec -B {params.bind} --nv {params.sif} "
         "/opt/deepvariant/bin/postprocess_variants"
-        "    --ref {config[references][gatkbundle][path]}/Homo_sapiens_assembly38.fasta"
+        "    --ref {config[references][gatkbundle]}/Homo_sapiens_assembly38.fasta"
         "    --infile {params.call}"
         "    --nonvariant_site_tfrecord_path {params.dv1a}"
         "    --outfile {params.vcf}"
         "    --gvcf_outfile {params.gvcf}"
         " > {log.out} 2> {log.err}\n"
+        "singularity exec -B {params.bind} --nv {params.sif} "
         "bgzip {params.vcf}"
         " >> {log.out} 2>> {log.err}\n"
+        "singularity exec -B {params.bind} --nv {params.sif} "
         "bgzip {params.gvcf}"
         " >> {log.out} 2>> {log.err}\n"
+        "singularity exec -B {params.bind} --nv {params.sif} "
         "tabix -p vcf {output.vcf}"
         " >> {log.out} 2>> {log.err}\n"
+        "singularity exec -B {params.bind} --nv {params.sif} "
         "tabix -p vcf  {output.gvcf}"
         " >> {log.out} 2>> {log.err}\n"
 
+
+rule germline__gatk_hcitv:
+    input:
+        cram = join(config['workdir'], "01.cram", "{sample}", "{sample}.cram"),
+    output:
+        gvcf = temp(join(config['workdir'], "10.germline_snv_gatk", "{sample}", "itvs", "{sample}.{itv}.vcf.gz")),
+        bam  = temp(join(config['workdir'], "10.germline_snv_gatk", "{sample}", "itvs", "{sample}.{itv}.vcf.bam")),
+    log:
+        out = join(config['pipelinedir'], "logs", "germline__gatk_hcitv", "{sample}.{itv}.o"),
+        err = join(config['pipelinedir'], "logs", "germline__gatk_hcitv", "{sample}.{itv}.e"),
+    threads:
+        int(allocated("threads", "germline__gatk_hcitv", cluster))
+    container:
+        config['container']['gatk']
+    shell:
+        "gatk --java-options \"-Djava.io.tmpdir=/lscratch/$SLURM_JOBID -Xms20G -Xmx20G -XX:ParallelGCThreads=2\" "
+        "    HaplotypeCaller" 
+        "    --reference {config[references][gatkbundle]}/Homo_sapiens_assembly38.fasta" 
+        "    --input {input.cram} "
+        "    --output {output.gvcf} "
+        "    --dbsnp {config[references][gatkbundle]}/Homo_sapiens_assembly38.dbsnp138.vcf.gz"
+        "    --intervals {config[references][gatkbundle]}/scattered_calling_intervals/temp_{wildcards.itv}_of_50/scattered.interval_list"
+        "    --bam-output {output.bam}"
+        "    --tmp-dir /lscratch/$SLURM_JOB_ID/"
+        "    -ERC GVCF"
+        " >> {log.out} 2>> {log.err}\n"
+
+
+rule germline__gatk_hcmerge:
+    input:
+        gvcf = generate_germline__gatk_hcmerge_input_gvcf,
+        bam  = generate_germline__gatk_hcmerge_input_bam,
+    params:
+        tmpbam="/lscratch/$SLURM_JOB_ID/{sample}.vcf.bamout.bam",
+        inputvcfs=lambda wildcards, input: " ".join("-I {} ".format(in_) for in_ in input.gvcf),
+        inputbams=lambda wildcards, input: " ".join(" {} ".format(in_) for in_ in input.bam),
+    output:
+        gvcf = join(config['workdir'], "10.germline_snv_gatk", "{sample}", "{sample}.gvcf.gz"),
+        gbam = join(config['workdir'], "10.germline_snv_gatk", "{sample}", "{sample}.gvcf.bam"),
+        gmet = join(config['workdir'], "10.germline_snv_gatk", "{sample}", "{sample}.gvcf.gz.variant_calling_summary_metrics"),
+    log:
+        out = join(config['pipelinedir'], "logs", "germline__gatk_hcmerge", "{sample}.o"),
+        err = join(config['pipelinedir'], "logs", "germline__gatk_hcmerge", "{sample}.e"),
+    threads:
+        int(allocated("threads", "germline__gatk_hcmerge", cluster))
+    container:
+        config['container']['gatk']
+    shell:
+        "gatk --java-options \"-Djava.io.tmpdir=/lscratch/$SLURM_JOBID -Xms20G -Xmx20G -XX:ParallelGCThreads=2\" "
+        "    MergeVcfs "
+        "    -O {output.gvcf}"
+        "    {params.inputvcfs}"
+        " >> {log.out} 2>> {log.err}\n"
+        "samtools merge"
+        "    -@ {threads} "
+        "    -o {params.tmpbam} "
+        "    {params.inputbams}"
+        " >> {log.out} 2>> {log.err}\n"
+        "samtools sort -@ {threads}"
+        "    -T /lscratch/$SLURM_JOB_ID/{wildcards.sample} "
+        "    -o {output.gbam} "
+        "    {params.tmpbam} "
+        " >> {log.out} 2>> {log.err}\n"
+        "gatk --java-options \"-Djava.io.tmpdir=/lscratch/$SLURM_JOBID -Xms20G -Xmx20G -XX:ParallelGCThreads=2\" "
+        "    CollectVariantCallingMetrics"
+        "    -I {output.gvcf}"
+        "    -O {output.gvcf}"
+        "    --DBSNP {config[references][gatkbundle]}/Homo_sapiens_assembly38.dbsnp138.vcf.gz"
+        "    -SD {config[references][gatkbundlesup]}/Homo_sapiens_assembly38.dict"
+        "    --GVCF_INPUT"
+        "    --THREAD_COUNT {threads}"
+        "    -TI {config[references][gatkbundle]}/wgs_calling_regions.hg38.interval_list"
+        " >> {log.out} 2>> {log.err}\n"
+
+
+rule germline__gdbimport:
+    input:
+        gvcf= lambda wildcards: ["{}/10.germline_snv_gatk/{}/{}.gvcf.gz".format(config['workdir'], sample, sample) for sample in dic_sample_to_runs],
+    params:
+        interval = "{}/scattered_calling_intervals/temp_{}_of_50/scattered.interval_list".format(config['references']['gatkbundle'], "{itv}"),
+        inputvcfs=lambda wildcards, input: " ".join("-V {} ".format(in_) for in_ in input.gvcf),
+    output:
+        itvvcf = temp(join(config['workdir'], "10.germline_snv_gatk", "VQSR", "Merge.itv_{itv}.vcf.gz")),
+        itvmf  = temp(join(config['workdir'], "10.germline_snv_gatk", "VQSR", "Merge.itv_{itv}.mf.vcf.gz")),
+        itvso  = join(config['workdir'], "10.germline_snv_gatk", "VQSR", "Merge.itv_{itv}.siteonly.vcf.gz"),
+    log:
+        out = join(config['pipelinedir'], "logs", "germline__gdbimport", "itv_{itv}.o"),
+        err = join(config['pipelinedir'], "logs", "germline__gdbimport", "itv_{itv}.e"),
+    threads:
+        int(allocated("threads", "germline__gdbimport", cluster))
+    container:
+        config['container']['gatk']
+    shell:
+        """
+        gatk --java-options "-Xmx4g -Xms4g -Djava.io.tmpdir=/lscratch/$SLURM_JOB_ID" \
+            GenomicsDBImport \
+            {params.inputvcfs} \
+            -L {params.interval} \
+            --genomicsdb-workspace-path /lscratch/$SLURM_JOB_ID/gdb.itv_{wildcards.itv} \
+            --merge-input-intervals \
+            --consolidate >> {log.out} 2>> {log.err}
+        gatk --java-options "-Xmx5g -Xms5g -Djava.io.tmpdir=/lscratch/$SLURM_JOB_ID" \
+            GenotypeGVCFs \
+            -R {config[references][gatkbundle]}/Homo_sapiens_assembly38.fasta \
+            -O {output.itvvcf} \
+            -D {config[references][gatkbundle]}/Homo_sapiens_assembly38.dbsnp138.vcf.gz \
+            -G StandardAnnotation -G AS_StandardAnnotation \
+            --allow-old-rms-mapping-quality-annotation-data \
+            --merge-input-intervals \
+            -V gendb:///lscratch/$SLURM_JOB_ID/gdb.itv_{wildcards.itv} \
+            -L {params.interval}   >> {log.out} 2>> {log.err}
+        gatk --java-options "-Xmx16g -Xms16g -Djava.io.tmpdir=/lscratch/$SLURM_JOB_ID" \
+            VariantFiltration \
+            --filter-expression "ExcessHet>54.69" \
+            --filter-name ExcessHet \
+            -V {output.itvvcf} \
+            -O {output.itvmf} >> {log.out} 2>> {log.err}
+        gatk --java-options "-Xmx16g -Xms16g -Djava.io.tmpdir=/lscratch/$SLURM_JOB_ID" \
+            MakeSitesOnlyVcf \
+             -I {output.itvmf} \
+             -O {output.itvso} >> {log.out} 2>> {log.err}
+        """
+            
+            
+rule germline__genotyping:
+    input:
+        mfitvs=lambda wildcards: \
+             ["{}/10.germline_snv_gatk/VQSR/Merge.itv_{}.mf.vcf.gz".format(config['workdir'], '%.4d'%itv) for itv in range(1, config['parameter']['gatkitv']+1)],
+        soitvs=lambda wildcards: \
+             ["{}/10.germline_snv_gatk/VQSR/Merge.itv_{}.siteonly.vcf.gz".format(config['workdir'], '%.4d'%itv) for itv in range(1, config['parameter']['gatkitv']+1)],
+    output:
+        sovcf = join(config['workdir'], "10.germline_snv_gatk", "VQSR", "Merge.sites_only.vcf.gz"),
+        mfvcf = join(config['workdir'], "10.germline_snv_gatk", "VQSR", "Merge.mf.vcf.gz"),
+        mir   = join(config['workdir'], "10.germline_snv_gatk", "VQSR", "Merge.indels.recal"),
+        mit   = join(config['workdir'], "10.germline_snv_gatk", "VQSR", "Merge.indels.tranches"),
+        msr   = join(config['workdir'], "10.germline_snv_gatk", "VQSR", "Merge.snps.recal"),
+        mst   = join(config['workdir'], "10.germline_snv_gatk", "VQSR", "Merge.snps.tranches"),
+        msmr  = join(config['workdir'], "10.germline_snv_gatk", "VQSR", "Merge.snps.model.report"),
+        mirv  = join(config['workdir'], "10.germline_snv_gatk", "VQSR", "tmp.indel.recalibrated.vcf"),
+        vqsr  = join(config['workdir'], "10.germline_snv_gatk", "Merge.flt.vqsr.vcf.gz"),
+    params:
+        mfinputs=lambda wildcards, input: " ".join("--input {} ".format(in_) for in_ in input.mfitvs),
+        soinputs=lambda wildcards, input: " ".join("--input {} ".format(in_) for in_ in input.soitvs),
+    log:
+        out = join(config['pipelinedir'], "logs", "germline__genotyping.o"),
+        err = join(config['pipelinedir'], "logs", "germline__genotyping.e"),
+    threads:
+        int(allocated("threads", "germline__genotyping", cluster))
+    container:
+        config['container']['gatk']
+    shell:
+        """
+        gatk --java-options "-Xmx16g -Xms16g -Djava.io.tmpdir=/lscratch/$SLURM_JOB_ID" \
+          GatherVcfsCloud \
+          --ignore-safety-checks \
+          --gather-type BLOCK \
+          --output {output.sovcf} \
+          {params.soinputs}  >> {log.out} 2>> {log.err}
+        gatk --java-options "-Xmx16g -Xms16g -Djava.io.tmpdir=/lscratch/$SLURM_JOB_ID" \
+          GatherVcfsCloud \
+          --ignore-safety-checks \
+          --gather-type BLOCK \
+          --output {output.mfvcf} \
+          {params.mfinputs}  >> {log.out} 2>> {log.err}
+        tabix -p vcf {output.sovcf}
+        tabix -p vcf {output.mfvcf}
+        gatk --java-options -Xms24g \
+          VariantRecalibrator \
+          -V {output.sovcf} \
+          -O {output.mir} \
+          --tranches-file {output.mit} \
+          --trust-all-polymorphic \
+          -tranche 100.0 -tranche 99.95 -tranche 99.9 -tranche 99.5 -tranche 99.0 -tranche 97.0 -tranche 96.0 \
+          -tranche 95.0 -tranche 94.0 -tranche 93.5 -tranche 93.0 -tranche 92.0 -tranche 91.0 -tranche 90.0 \
+          -an FS -an ReadPosRankSum -an MQRankSum -an QD -an SOR -an DP\
+          --use-allele-specific-annotations \
+          -mode INDEL \
+          --max-gaussians 4 \
+          --resource:mills,known=false,training=true,truth=true,prior=12 {config[references][gatkbundle]}/Mills_and_1000G_gold_standard.indels.hg38.vcf.gz \
+          --resource:axiomPoly,known=false,training=true,truth=false,prior=10 {config[references][gatkbundle]}/Axiom_Exome_Plus.genotypes.all_populations.poly.hg38.vcf.gz \
+          --resource:dbsnp,known=true,training=false,truth=false,prior=2 {config[references][gatkbundle]}/Homo_sapiens_assembly38.dbsnp138.vcf.gz >> {log.out} 2>> {log.err}
+        gatk --java-options -Xms50g \
+          VariantRecalibrator \
+          -V {output.sovcf} \
+          -O {output.msr} \
+          --tranches-file {output.mst} \
+          --trust-all-polymorphic \
+          -tranche 100.0 -tranche 99.95 -tranche 99.9 -tranche 99.8 -tranche 99.6 -tranche 99.5 -tranche 99.4 \
+          -tranche 99.3 -tranche 99.0 -tranche 98.0 -tranche 97.0 -tranche 90.0 \
+          -an QD -an MQRankSum -an ReadPosRankSum -an FS -an MQ -an SOR -an DP \
+          --use-allele-specific-annotations \
+          -mode SNP \
+          --sample-every-Nth-variant 10 \
+          --output-model {output.msmr} \
+          --max-gaussians 6 \
+          -resource:hapmap,known=false,training=true,truth=true,prior=15 {config[references][gatkbundle]}/hapmap_3.3.hg38.vcf.gz \
+          -resource:omni,known=false,training=true,truth=true,prior=12 {config[references][gatkbundle]}/1000G_omni2.5.hg38.vcf.gz \
+          -resource:1000G,known=false,training=true,truth=false,prior=10 {config[references][gatkbundle]}/1000G_phase1.snps.high_confidence.hg38.vcf.gz \
+          -resource:dbsnp,known=true,training=false,truth=false,prior=7 {config[references][gatkbundle]}/Homo_sapiens_assembly38.dbsnp138.vcf.gz >> {log.out} 2>> {log.err}
+        gatk --java-options -Xms80g \
+          VariantRecalibrator \
+          -V {output.sovcf} \
+          -O {output.msr} \
+          --tranches-file {output.mst} \
+          --trust-all-polymorphic \
+          -tranche 100.0 -tranche 99.95 -tranche 99.9 -tranche 99.8 -tranche 99.6 -tranche 99.5 -tranche 99.4 \
+          -tranche 99.3 -tranche 99.0 -tranche 98.0 -tranche 97.0 -tranche 90.0 \
+          -an QD -an MQRankSum -an ReadPosRankSum -an FS -an MQ -an SOR -an DP \
+          --use-allele-specific-annotations \
+          -mode SNP \
+          --input-model {output.msmr} \
+          --max-gaussians 6 \
+          -resource:hapmap,known=false,training=true,truth=true,prior=15 {config[references][gatkbundle]}/hapmap_3.3.hg38.vcf.gz \
+          -resource:omni,known=false,training=true,truth=true,prior=12 {config[references][gatkbundle]}/1000G_omni2.5.hg38.vcf.gz \
+          -resource:1000G,known=false,training=true,truth=false,prior=10 {config[references][gatkbundle]}/1000G_phase1.snps.high_confidence.hg38.vcf.gz \
+          -resource:dbsnp,known=true,training=false,truth=false,prior=7 {config[references][gatkbundle]}/Homo_sapiens_assembly38.dbsnp138.vcf.gz >> {log.out} 2>> {log.err}
+        gatk --java-options -Xms5g \
+          ApplyVQSR \
+          -O {output.mirv} \
+          -V {output.mfvcf} \
+          --recal-file {output.mir} \
+          --use-allele-specific-annotations \
+          --tranches-file {output.mit} \
+          --truth-sensitivity-filter-level 95.0 \
+          --create-output-variant-index true \
+          -mode INDEL >> {log.out} 2>> {log.err}
+        gatk --java-options -Xms5g \
+          ApplyVQSR \
+          -O {output.vqsr} \
+          -V {output.mirv} \
+          --recal-file {output.msr} \
+          --use-allele-specific-annotations \
+          --tranches-file {output.mst} \
+          --truth-sensitivity-filter-level 99.7 \
+          --create-output-variant-index true \
+          -mode SNP >> {log.out} 2>> {log.err}
+        """
 
 rule germline__peddy:
     input:
@@ -109,6 +359,7 @@ rule germline__peddy:
         rgsm = join( config['workdir'], "01.cram", "{sample}", "{sample}.cram.samples" ),
     output:
         selfsm = join(config['workdir'], "05.peddy", "{sample}", "{sample}.peddy.ped"),
+        selfsc = join(config['workdir'], "05.peddy", "{sample}", "{sample}.sex_check.csv"),
     log: 
         out = join(config['pipelinedir'], "logs", "germline__peddy", "{sample}.o"),
         err = join(config['pipelinedir'], "logs", "germline__peddy", "{sample}.e"),
@@ -151,7 +402,7 @@ rule germline__strelka:
     shell:
         "configureStrelkaGermlineWorkflow.py"
         "  --bam {input.cram}"
-        "  --referenceFasta {config[references][gatkbundle][path]}/Homo_sapiens_assembly38.fasta"
+        "  --referenceFasta {config[references][gatkbundle]}/Homo_sapiens_assembly38.fasta"
         "  --runDir {params.dir}"
         "  > {log.out} 2> {log.err}\n"
         "cd {params.dir} \n"
@@ -180,7 +431,7 @@ rule germline__manta:
     shell:
         "configManta.py"
         "  --bam {input.cram}"
-        "  --reference {config[references][gatkbundle][path]}/Homo_sapiens_assembly38.fasta"
+        "  --reference {config[references][gatkbundle]}/Homo_sapiens_assembly38.fasta"
         "  --runDir {params.dir}"
         "  > {log.out} 2> {log.err}\n"
         "cd {params.dir} \n"
@@ -214,7 +465,7 @@ rule germline__tiddit:
         "  --sv"
         "  --threads {threads}"
         "  --bam {input.cram}"
-        "  --ref {config[references][gatkbundle][path]}/Homo_sapiens_assembly38.fasta"
+        "  --ref {config[references][gatkbundle]}/Homo_sapiens_assembly38.fasta"
         "  -o {params.prefix}"
         "  > {log.out} 2> {log.err}\n"
 
@@ -237,11 +488,11 @@ rule germline__gridss_preprocess:
         "cd {params.workspace} > {log.out} 2> {log.err}\n"
         "gridss "
         "  -s preprocess "
-        "  -r {config[references][gridss][path]}/Homo_sapiens_assembly38.fasta"
+        "  -r {config[references][gatkbundle]}/Homo_sapiens_assembly38.fasta"
         "  -t {threads} "
         "  -w {params.workspace} "
         "  {input.cram}"
-        "  -b {config[references][blacklist][path]}/Merge.exclude.bed"
+        "  -b {config[references][blacklist]}/Merge.exclude.bed"
         "  >> {log.out} 2>> {log.err}\n"
         "touch {output.ok}"
         "  >> {log.out} 2>> {log.err}\n"
@@ -269,7 +520,7 @@ rule germline__gridss_assemble:
     shell:
         "gridss "
         "  -s assemble "
-        "  -r {config[references][gridss][path]}/Homo_sapiens_assembly38.fasta"
+        "  -r {config[references][gatkbundle]}/Homo_sapiens_assembly38.fasta"
         "  -t {threads}"
         "  -a {params.bam}"
         "  --jobnodes {config[parameter][gridss_shards]}"
@@ -302,13 +553,54 @@ rule germline__gridss_call:
     shell:
         "gridss "
         "  -s assemble,call "
-        "  -r {config[references][gridss][path]}/Homo_sapiens_assembly38.fasta"
+        "  -r {config[references][gatkbundle]}/Homo_sapiens_assembly38.fasta"
         "  -t {threads}"
         "  -a {output.bam}"
         "  -o {output.vcf}"
         "  -w {params.workspace}"
         "  {input.cram}"
         "  > {log.out} 2> {log.err}\n"
+
+
+rule germline__canvas:
+    input:
+        bam    = join(config['workdir'], "02.bam", "{sample}", "{sample}.bam"),
+        selfsc = join(config['workdir'], "05.peddy", "{sample}", "{sample}.sex_check.csv"),
+        vgz    = join(config['workdir'], "12.germline_snv_strelka", "{sample}", "results", "variants", "variants.vcf.gz"),
+    output:
+        vcf = join(config['workdir'], "17.germline_cnv_canvas", "{sample}", "CNV.vcf.gz"),
+    params:
+        script = join(config['pipelinedir'], "scripts", "peddy2ploidy.py"),
+        prefix = join(config['workdir'], "17.germline_cnv_canvas", "{sample}"),
+    log:
+        out = join(config['pipelinedir'], "logs", "germline__canvas", "{sample}.o"),
+        err = join(config['pipelinedir'], "logs", "germline__canvas", "{sample}.e"),
+    threads:
+        int(allocated("threads", "germline__canvas", cluster))
+    container:
+        config['container']['canvas']
+    shell:
+        "cd {params.prefix}\n"
+        "rm -rf *\n"
+        "mkdir ref\n"
+        "cd ref\n"
+        "ln -s {config[references][canvas]} canvas\n"
+        "ln -s {config[references][canvas]}/Sequence Sequence\n"
+        "cd {params.prefix}\n"
+        "python3 {params.script} {input.selfsc} ref/ploidy.vcf"
+        "  > {log.out} 2> {log.err}\n"
+        "Canvas.sh"
+        "  SmallPedigree-WGS"
+        "  -b {input.bam}"
+        "  -o {params.prefix}"
+        "  -r ref/canvas/kmer.fa"
+        "  -g ref/canvas/WholeGenomeFasta"
+        "  -f ref/canvas/filter13.bed"
+        "  --sample-b-allele-vcf={input.vgz}"
+        "  --ploidy-vcf=ref/ploidy.vcf"
+        "  >> {log.out} 2>> {log.err}\n"
+        "rm -rf ref TempCNV"
+        "  >> {log.out} 2>> {log.err}\n"
 
 
 rule germline__melt_ins:
@@ -330,7 +622,7 @@ rule germline__melt_ins:
         "  Single "
         "  -a "
         "  -c {threads} "
-        "  -h {config[references][gatkbundle][path]}/Homo_sapiens_assembly38.fasta"
+        "  -h {config[references][gatkbundle]}/Homo_sapiens_assembly38.fasta"
         "  -bamfile {input.cram} "
         "  -n /opt/MELT/add_bed_files/Hg38/Hg38.genes.bed "
         "  -t /opt/MELT/me_refs/transposon_file_list.txt "
@@ -358,7 +650,7 @@ rule germline__melt_del1:
         "  -bamfile {input.cram} "
         "  -w {params.prefix}/workspace"
         "  -bed /opt/MELT/add_bed_files/Hg38/LINE1.deletion.bed "
-        "  -h {config[references][gatkbundle][path]}/Homo_sapiens_assembly38.fasta"
+        "  -h {config[references][gatkbundle]}/Homo_sapiens_assembly38.fasta"
         "  >> {log.out} 2>> {log.err}\n"
         "ls {params.prefix}/workspace/*.del.tsv > /lscratch/$SLURM_JOB_ID/del_LINE1.output.list"
         "  2>> {log.err}\n"
@@ -366,7 +658,7 @@ rule germline__melt_del1:
         "  Deletion-Merge"
         "  -mergelist /lscratch/$SLURM_JOB_ID/del_LINE1.output.list"
         "  -bed /opt/MELT/add_bed_files/Hg38/LINE1.deletion.bed"
-        "  -h {config[references][gatkbundle][path]}/Homo_sapiens_assembly38.fasta"
+        "  -h {config[references][gatkbundle]}/Homo_sapiens_assembly38.fasta"
         "  -o {params.prefix}"
         "  >> {log.out} 2>> {log.err}\n"
 
@@ -391,7 +683,7 @@ rule germline__melt_del2:
         "  -bamfile {input.cram} "
         "  -w {params.prefix}/workspace"
         "  -bed /opt/MELT/add_bed_files/Hg38/AluY.deletion.bed "
-        "  -h {config[references][gatkbundle][path]}/Homo_sapiens_assembly38.fasta"
+        "  -h {config[references][gatkbundle]}/Homo_sapiens_assembly38.fasta"
         "  >> {log.out} 2>> {log.err}\n"
         "ls {params.prefix}/workspace/*.del.tsv > /lscratch/$SLURM_JOB_ID/del_AluY.output.list"
         "  2>> {log.err}\n"
@@ -399,7 +691,7 @@ rule germline__melt_del2:
         "  Deletion-Merge"
         "  -mergelist /lscratch/$SLURM_JOB_ID/del_AluY.output.list"
         "  -bed /opt/MELT/add_bed_files/Hg38/AluY.deletion.bed"
-        "  -h {config[references][gatkbundle][path]}/Homo_sapiens_assembly38.fasta"
+        "  -h {config[references][gatkbundle]}/Homo_sapiens_assembly38.fasta"
         "  -o {params.prefix}"
         "  >> {log.out} 2>> {log.err}\n"
 
@@ -419,8 +711,8 @@ rule germline__msi_msisensorpro:
     shell:
         "msisensor-pro "
         "  pro"
-        "  -d {config[references][PanelOfNormal][path]}/wgs_nygc112.v1/msisensorpro/Homo_sapiens_assembly38.fasta.scan.list_baseline "
-        "  -g {config[references][gatkbundle][path]}/Homo_sapiens_assembly38.fasta"
+        "  -d {config[references][pon]}/MSIsensorpro.workspace/baseline/ref_scan_baseline"
+        "  -g {config[references][gatkbundle]}/Homo_sapiens_assembly38.fasta"
         "  -t {input.cram} "
         "  -o {output.prefix}"
         "  -b {threads}"
@@ -435,9 +727,9 @@ rule germline__hlala:
     params: 
         sample  = "{sample}",
         outdir = join(config['workdir'], "25.germline_hla-la"),
-        graph  = config['references']['hla-la']['path'],
+        graph  = config['references']['hla-la'],
         sif    = config['container']['hla-la'],
-        bind   = "/vf,/spin1,/data,/fdb,/gpfs,/lscratch,/home,%s/graphs:/usr/local/opt/hla-la/graphs"%(config['references']['hla-la']['path'])
+        bind   = "/vf,/spin1,/data,/fdb,/gpfs,/lscratch,/home,%s/graphs:/usr/local/opt/hla-la/graphs"%(config['references']['hla-la'])
     log:
         out = join(config['pipelinedir'], "logs", "germline__hlala", "{sample}.o"),
         err = join(config['pipelinedir'], "logs", "germline__hlala", "{sample}.e"),

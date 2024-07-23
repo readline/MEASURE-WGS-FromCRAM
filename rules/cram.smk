@@ -82,7 +82,7 @@ rule cram__to_bam:
     shell:
         """
         cd {params.folder}
-        samtools view -@ {threads} -O BAM -o {output.bam} {input.cram} > {log.out} 2>{log.err}
+        samtools view -@ {threads} -O BAM -T {config[references][gatkbundle]}/Homo_sapiens_assembly38.fasta -o {output.bam} {input.cram} > {log.out} 2>{log.err}
         samtools index -@ {threads} {output.bam} >> {log.out} 2>>{log.err}
         """
 
@@ -129,7 +129,7 @@ rule cram__verifybamid2:
         "verifybamid2"
         "  --SVDPrefix /usr/local/share/verifybamid2-2.0.1-10/resource/1000g.phase3.100k.b38.vcf.gz.dat"
         "  --BamFile {input.cram}"
-        "  --Reference {config[references][gatkbundle][path]}/Homo_sapiens_assembly38.fasta"
+        "  --Reference {config[references][gatkbundle]}/Homo_sapiens_assembly38.fasta"
         "  --Output {params.prefix}"
         "  --NumThread {threads}"
         "  >{log.out} 2>{log.err}"

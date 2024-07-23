@@ -55,6 +55,7 @@ rule all:
             join( config['workdir'], "11.germline_snv_deepvariant", "{sample}", "{sample}.deepvariant.vcf.gz" ),
             sample=dic_sample_to_runs,
         ),
+        join(config['workdir'], "10.germline_snv_gatk", "Merge.flt.vqsr.vcf.gz"),
         expand(
             join(config['workdir'], "05.peddy", "{sample}", "{sample}.peddy.ped"),
             sample=dic_sample_to_runs,
@@ -73,6 +74,10 @@ rule all:
         ),
         expand(
             join(config['workdir'], "15.germline_sv_gridss", "{sample}", "{sample}.gridss.vcf"),
+            sample=dic_sample_to_runs,
+        ),
+        expand(
+            join(config['workdir'], "17.germline_cnv_canvas", "{sample}", "CNV.vcf.gz"),
             sample=dic_sample_to_runs,
         ),
         expand(

@@ -97,7 +97,7 @@ germline__deepvariant1:
 
 germline__deepvariant2:
     partition: 'gpu'
-    threads: 12
+    threads: 24
     mem: '48g'
     time: '2-00:00:00'
     extra: " --gres=lscratch:40,gpu:1 --constraint='gpua100|gpuv100|gpuv100x'"
@@ -108,6 +108,34 @@ germline__deepvariant3:
     mem: '96g'
     time: '2-00:00:00'
     extra: " --gres=lscratch:40,gpu:1 --constraint='gpua100|gpuv100|gpuv100x'"
+
+germline__gatk_hcitv:
+    partition: 'norm'
+    threads: 4
+    mem: '36g'
+    time: '2-00:00:00'
+    extra: ' --gres=lscratch:50'
+
+germline__gatk_hcmerge:
+    partition: 'norm'
+    threads: 4
+    mem: '24g'
+    time: '2-00:00:00'
+    extra: ' --gres=lscratch:200'
+
+germline__gdbimport:
+    partition: 'norm'
+    threads: 4
+    mem: '16g'
+    time: '2-00:00:00'
+    extra: ' --gres=lscratch:40'
+
+germline__genotyping:
+    partition: 'norm'
+    threads: 8
+    mem: '64g'
+    time: '2-00:00:00'
+    extra: ' --gres=lscratch:100'
 
 germline__strelka:
     partition: 'norm'
@@ -175,7 +203,7 @@ germline__melt_del2:
 germline__msi_msisensorpro:
     partition: 'norm'
     threads: 4
-    mem: '48g'
+    mem: '16g'
     time: '2-00:00:00'
     extra: ' --gres=lscratch:50'
 
