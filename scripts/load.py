@@ -23,6 +23,7 @@ def samplesheet(sspath):
     dic_sample_to_runs = {}
     dic_sample_to_patient = {}
     dic_run = {}
+    dic_tumor_to_normal = {}
     tasks = {'germline':[],'somatic_ss':[], 'somatic_paired':[]}
     for i in df.index:
         s = df.loc[i,'SAMPLE']
@@ -43,9 +44,10 @@ def samplesheet(sspath):
         if 'TOD' in dic_patient_to_eventsamples[p]:
             if 'CR' in dic_patient_to_eventsamples[p]:
                 tasks['somatic_paired'].append([dic_patient_to_eventsamples[p]['TOD'], dic_patient_to_eventsamples[p]['CR']])
+                dic_tumor_to_normal[dic_patient_to_eventsamples[p]['TOD']] = dic_patient_to_eventsamples[p]['CR']
             else:
                 tasks['somatic_ss'].append(dic_patient_to_eventsamples[p]['TOD'])
-    return dic_patient_to_eventsamples, dic_sample_to_runs, dic_run, dic_sample_to_patient, tasks
+    return dic_patient_to_eventsamples, dic_sample_to_runs, dic_run, dic_sample_to_patient, dic_tumor_to_normal, tasks
 
 def test_samplesheet():
     sspath='%s/../sample_sheet.txt'%(os.path.dirname(os.path.abspath(__file__)))

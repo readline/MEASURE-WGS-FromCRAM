@@ -16,7 +16,7 @@ print(config)
 with open(join(config['pipelinedir'], 'cluster.yaml')) as infile:
     cluster = yaml.safe_load(infile)
 # Load sample sheet
-dic_patient_to_eventsamples, dic_sample_to_runs, dic_run, dic_sample_to_patient, tasks = samplesheet(join(config['pipelinedir'],'sample_sheet.txt'))
+dic_patient_to_eventsamples, dic_sample_to_runs, dic_run, dic_sample_to_patient, dic_tumor_to_normal, tasks = samplesheet(join(config['pipelinedir'],'sample_sheet.txt'))
 
 snakedir = os.getcwd()
 print('Runtime dir:', snakedir)
@@ -74,6 +74,10 @@ rule all:
         ),
         expand(
             join(config['workdir'], "15.germline_sv_gridss", "{sample}", "{sample}.gridss.vcf"),
+            sample=dic_sample_to_runs,
+        ),
+        expand(
+            join(config['workdir'], "15.germline_sv_gridss", "{sample}", "virusbreakend", "{sample}.virusbreakend.vcf"),
             sample=dic_sample_to_runs,
         ),
         expand(
