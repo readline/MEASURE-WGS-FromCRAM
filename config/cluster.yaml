@@ -172,6 +172,20 @@ germline__gridss_call:
     time: '2-00:00:00'
     extra: ' --gres=lscratch:50'
 
+germline__gridss_virusbreakend:
+    partition: 'norm'
+    threads: 32
+    mem: '64g'
+    time: '2-00:00:00'
+    extra: ' --gres=lscratch:50'
+
+germline__gripss_germline:
+    partition: 'norm'
+    threads: 8
+    mem: '32g'
+    time: '2-00:00:00'
+    extra: ' --gres=lscratch:50'
+
 germline__tiddit:
     partition: 'norm'
     threads: 24

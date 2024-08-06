@@ -30,3 +30,9 @@ references:
         clean:  
                 - reference/hmf_dna_pipeline_resources.38_v5.34.tar.gz
         path:   reference/hmftools
+    virusbreakend:
+        link:   https://virusbreakend.s3.us-east-2.amazonaws.com/virusbreakenddb_20210401.tar.gz
+        pack:   reference/virusbreakenddb_20210401
+        clean:
+                - reference/virusbreakenddb_20210401.tar.gz
+        path:   reference/virusbreakend
