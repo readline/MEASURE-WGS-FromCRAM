@@ -166,7 +166,7 @@ rule somatic_ss__octopus_merge:
 
 rule somatic_ss__vardict_split:
     input:
-        cram = join(config['workdir'], "01.cram", "{sample}", "{sample}.cram"),
+        bam = join(config['workdir'], "02.bam", "{sample}", "{sample}.bam"),
     output:
         vcf = temp(join(config['workdir'], "43.somatic_ss_snvindel_vardict", "{sample}", "itvs", "{sample}.{itv}.vardict.vcf")),
     params:
@@ -183,14 +183,14 @@ rule somatic_ss__vardict_split:
         "cd {params.dir}\n"
         "grep ^chr {config[references][gatkbundle]}/scattered_calling_intervals/{wildcards.itv}/scattered.interval_list|"
         "    cut -f1-3 > {wildcards.itv}.bed"
-        "    > {log.out} 2> {log.err}\n"
+        "    2> {log.err}\n"
         "export JAVA_OPTS='\"-Xms60g\" \"-Xmx60g\"'"
-        "    >> {log.out} 2>> {log.err}\n"
+        "    > {log.out} 2>> {log.err}\n"
         "vardict-java "
         "    -G {config[references][gatkbundle]}/Homo_sapiens_assembly38.fasta "
         "    -f 0.05 "
         "    -N {wildcards.sample} "
-        "    -b {input.cram} "
+        "    -b {input.bam} "
         "    -th {threads} "
         "    -c 1 "
         "    -S 2 "
