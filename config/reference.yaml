@@ -6,6 +6,9 @@ references:
     gatkbundlesup:
         link:   /fdb/GATK_resource_bundle/hg38
         path:   reference/hg38-sup
+    gatksomatic:
+        link:   /data/yuk5/data/gatk-somatic-hg38
+        path:   reference/gatk-somatic-hg38
     scramble:
         link:   /data/yuk5/pipeline/wgs_germline/ref/SCRAMBLE
         path:   reference/SCRAMBLE
