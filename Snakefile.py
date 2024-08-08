@@ -129,6 +129,6 @@ rule all:
 
         expand(
             join(config['workdir'], "43.somatic_ss_snvindel_vardict", "{sample}", "{sample}.vardict.pass.vcf.gz"),
-            sample=tasks['somatic_ss']+tasks['somatic_paired'],
+            sample=tasks['somatic_ss']+[i[0] for i in tasks['somatic_paired']],
         ),
 

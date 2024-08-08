@@ -180,7 +180,7 @@ rule somatic_ss__vardict_split:
     container:
         config['container']['vardict']
     shell:
-        "cd {params.dir}"
+        "cd {params.dir}\n"
         "grep ^chr {config[references][gatkbundle]}/scattered_calling_intervals/{wildcards.itv}/scattered.interval_list|"
         "    cut -f1-3 > {wildcards.itv}.bed"
         "    > {log.out} 2> {log.err}\n"
@@ -195,7 +195,7 @@ rule somatic_ss__vardict_split:
         "    -c 1 "
         "    -S 2 "
         "    -E 3 "
-        "    {wildcards.itv}.bed |
+        "    {wildcards.itv}.bed |"
         "teststrandbias.R "
         "    -N {wildcards.sample} "
         "    -E "
@@ -299,5 +299,3 @@ rule somatic_ss__dellysv:
         "    2> {log.err}\n"
         "tabix {output.vcfgz}"
         "  > {log.out} 2>> {log.err}\n"
-
-
