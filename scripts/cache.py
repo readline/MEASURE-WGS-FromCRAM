@@ -60,6 +60,7 @@ def reference(config):
     cachedir = config['cachedir']
     refdir = '%s/reference'%(cachedir)
     
+    refok = []
     if not os.path.exists(refdir):
         subprocess.check_call(['mkdir', '-p', refdir])
     elif not os.path.exists('%s/ref.ok'%(refdir)):
@@ -70,12 +71,13 @@ def reference(config):
         for item in config['references']:
             if config['references'][item]['link'] in refexists:
                 print('Reference', item, 'exists, skip...')
+                refok.append(config['references'][item]['link'])
                 continue
             else:
                 print(item, 'in refdir does not match current config:', config['references'][item]['link'])
-                print('Redo the reference cache...')
-                subprocess.check_call(['rm', '-rf', refdir])
-                subprocess.check_call(['mkdir', '-p', refdir])
+                print('Redo the reference cache for %s...'%(item))
+                # subprocess.check_call(['rm', '-rf', refdir])
+                # subprocess.check_call(['mkdir', '-p', refdir])
                 
     # Download reference packages
     if os.path.exists('%s/download.ok'%(refdir)):
@@ -85,6 +87,8 @@ def reference(config):
         downloaded = []
         
     for item in config['references']:
+        if config['references'][item]['link'] in refok:
+            continue
         if config['references'][item]['link'] in downloaded:
             continue
         try:
