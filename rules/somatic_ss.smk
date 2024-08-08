@@ -129,13 +129,14 @@ rule somatic_ss__octopus_split:
 
 rule somatic_ss__octopus_merge:
     input:
-        vcfs =lambda wildcards: \
-             ["{}/42.somatic_ss_snvindel_octopus/{}/chroms/{}.{}.octopus.vcf".format(config['workdir'], wildcards.sample, wildcards.sample, chrid) for chrid in ['chr%d'%(i) for i in range(1,23)]+['chrX','chrY']],
+        tbis =lambda wildcards: \
+             ["{}/42.somatic_ss_snvindel_octopus/{}/chroms/{}.{}.octopus.vcf.gz.tbi".format(config['workdir'], wildcards.sample, wildcards.sample, chrid) for chrid in ['chr%d'%(i) for i in range(1,23)]+['chrX','chrY']],
     output:
         vcf  = join(config['workdir'], "42.somatic_ss_snvindel_octopus", "{sample}", "{sample}.octopus.vcf.gz"),
         vcfp = join(config['workdir'], "42.somatic_ss_snvindel_octopus", "{sample}", "{sample}.octopus.pass.vcf.gz"),
     params:
         dir  = join(config['workdir'], "42.somatic_ss_snvindel_octopus", "{sample}"),
+        inputvcfs=lambda wildcards, input: " ".join(" {} ".format(in_.replace('.tbi','')) for in_ in input.tbis),
     log:
         out = join(config['pipelinedir'], "logs", "somatic_ss__octopus_merge", "{sample}.o"),
         err = join(config['pipelinedir'], "logs", "somatic_ss__octopus_merge", "{sample}.e"),
@@ -148,7 +149,7 @@ rule somatic_ss__octopus_merge:
         "    -a "
         "    -O z "
         "    -o {output.vcf} "
-        "    {input.vcfs} "
+        "    {params.inputvcfs} "
         "    > {log.out} 2> {log.err}\n"
         "bcftools view "
         "    -f 'PASS' "

@@ -5,6 +5,13 @@ __default__:
     time: '2-00:00:00'
     extra: ' --gres=lscratch:20'
 
+vcf_compress:
+    partition: 'norm'
+    threads: 2
+    mem: '4g'
+    time: '1-00:00:00'
+    extra: ' --gres=lscratch:20'
+
 cram__check_md5:
     partition: 'norm'
     threads: 8
