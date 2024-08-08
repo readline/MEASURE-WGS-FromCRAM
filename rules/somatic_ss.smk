@@ -184,7 +184,7 @@ rule somatic_ss__vardict_split:
         "grep ^chr {config[references][gatkbundle]}/scattered_calling_intervals/{wildcards.itv}/scattered.interval_list|"
         "    cut -f1-3 > {wildcards.itv}.bed"
         "    2> {log.err}\n"
-        "export JAVA_OPTS='\"-Xms60g\" \"-Xmx60g\"'"
+        "export JAVA_OPTS='\"-Xms90g\" \"-Xmx90g\"'"
         "    > {log.out} 2>> {log.err}\n"
         "vardict-java "
         "    -G {config[references][gatkbundle]}/Homo_sapiens_assembly38.fasta "
@@ -343,11 +343,11 @@ rule somatic_ss__amber:
     threads:
         int(allocated("threads", "somatic_ss__amber", cluster))
     container:
-        config['container']['hmftools']
+        config['container']['amber']
     shell:
         "cd {params.dir}"
         "java -Xmx24G "
-        "    -jar /usr/local/share/hmftools-amber-4.0-0/amber.jar "
+        "    -jar /usr/local/share/hmftools-amber-4.0-1/amber.jar "
         "    -tumor {wildcards.sample} "
         "    -tumor_bam {input.cram} "
         "    -output_dir {params.dir} "
@@ -371,7 +371,7 @@ rule somatic_ss__cobalt:
     threads:
         int(allocated("threads", "somatic_ss__cobalt", cluster))
     container:
-        config['container']['hmftools']
+        config['container']['cobalt']
     shell:
         "cd {params.dir}"
         "java -Xmx12G "
@@ -405,7 +405,7 @@ rule somatic_ss__purple:
     threads:
         int(allocated("threads", "somatic_ss__purple", cluster))
     container:
-        config['container']['hmftools']
+        config['container']['purple']
     shell:
         "cd {params.dir}"
         "java -Xmx24G "
