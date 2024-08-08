@@ -565,7 +565,9 @@ rule germline__gridss_virusbreakend:
     input:
         cram = join(config['workdir'], "01.cram", "{sample}", "{sample}.cram"),
     output:
-        vcf = join(config['workdir'], "15.germline_sv_gridss", "{sample}", "virusbreakend", "{sample}.virusbreakend.vcf"),
+        vcf = join(config['workdir'], "16.germline_sv_virusbreakend", "{sample}", "{sample}.virusbreakend.vcf"),
+    params:
+        dir = join(config['workdir'], "16.germline_sv_virusbreakend", "{sample}", "tmp"),
     log:
         out = join(config['pipelinedir'], "logs", "germline__gridss_virusbreakend", "{sample}.o"),
         err = join(config['pipelinedir'], "logs", "germline__gridss_virusbreakend", "{sample}.e"),
@@ -574,13 +576,18 @@ rule germline__gridss_virusbreakend:
     container:
         config['container']['gridss']
     shell:
+        "mkdir -p {params.dir} \n"
+        "cd {params.dir} \n"
+        "ln -s {config[references][gatkbundle]}/Homo_sapiens_assembly38.fasta \n"
         "virusbreakend "
-        "  -r {config[references][gatkbundle]}/Homo_sapiens_assembly38.fasta "
+        "  -r Homo_sapiens_assembly38.fasta "
         "  -j /usr/local/share/gridss-2.13.2-3/gridss.jar "
         "  -o {output.vcf} "
         "  --db {config[references][virusbreakend]} "
         "  {input.cram}"
         "  > {log.out} 2> {log.err}\n"
+        "cd .. \n"
+        "rm -rf tmp"
 
 rule germline__gripss_germline:
     input:
