@@ -130,16 +130,14 @@ rule somatic_ss__octopus_split:
 
 rule somatic_ss__octopus_merge:
     input:
-        vcfs =lambda wildcards: \
-             ["{}/42.somatic_ss_snvindel_octopus/{}/chroms/{}.{}.octopus.vcf".format(config['workdir'], wildcards.sample, wildcards.sample, chrid) for chrid in ['chr%d'%(i) for i in range(1,23)]+['chrX','chrY']],
+        tbis =lambda wildcards: \
+             ["{}/42.somatic_ss_snvindel_octopus/{}/chroms/{}.{}.octopus.vcf.gz.tbi".format(config['workdir'], wildcards.sample, wildcards.sample, chrid) for chrid in ['chr%d'%(i) for i in range(1,23)]+['chrX','chrY']],
     output:
         vcf  = join(config['workdir'], "42.somatic_ss_snvindel_octopus", "{sample}", "{sample}.octopus.vcf.gz"),
         vcfp = join(config['workdir'], "42.somatic_ss_snvindel_octopus", "{sample}", "{sample}.octopus.pass.vcf.gz"),
     params:
         dir  = join(config['workdir'], "42.somatic_ss_snvindel_octopus", "{sample}"),
-        vcf  = join(config['workdir'], "42.somatic_ss_snvindel_octopus", "{sample}", "{sample}.octopus.vcf"),
-        vcfp = join(config['workdir'], "42.somatic_ss_snvindel_octopus", "{sample}", "{sample}.octopus.pass.vcf"),
-        inputvcfs=lambda wildcards, input: " ".join("-I {} ".format(in_) for in_ in input.vcfs),
+        inputvcfs=lambda wildcards, input: " ".join(" {} ".format(in_.replace('.tbi','')) for in_ in input.tbis),
     log:
         out = join(config['pipelinedir'], "logs", "somatic_ss__octopus_merge", "{sample}.o"),
         err = join(config['pipelinedir'], "logs", "somatic_ss__octopus_merge", "{sample}.e"),
@@ -148,15 +146,17 @@ rule somatic_ss__octopus_merge:
     container:
         config['container']['gatk']
     shell:
-        "gatk --java-options \"-Xmx24g -Xms24g -Djava.io.tmpdir=/lscratch/$SLURM_JOB_ID\" MergeVcfs "
+        "bcftools concat "
+        "    -a "
+        "    -O z "
+        "    -o {output.vcf} "
         "    {params.inputvcfs} "
-        "    -O {params.vcf} "
         "    > {log.out} 2> {log.err}\n"
-        "head -n 10000 {params.vcf} |grep '^#' > {params.vcfp} 2>>{log.err} \n"
-        "grep -v '^#' {params.vcf} | grep PASS >> {params.vcfp} 2>>{log.err} \n"
-        "bgzip  {params.vcf} "
-        "    >> {log.out} 2>> {log.err}\n"
-        "bgzip  {params.vcfp} "
+        "bcftools view "
+        "    -f 'PASS' "
+        "    {output.vcf}"
+        "    -O z "
+        "    -o {output.vcfp}"
         "    >> {log.out} 2>> {log.err}\n"
         "tabix -p vcf {output.vcfp} "
         "    >> {log.out} 2>> {log.err}\n"
@@ -167,7 +167,7 @@ rule somatic_ss__octopus_merge:
 
 rule somatic_ss__vardict_split:
     input:
-        cram = join(config['workdir'], "01.cram", "{sample}", "{sample}.cram"),
+        bam = join(config['workdir'], "02.bam", "{sample}", "{sample}.bam"),
     output:
         vcf = temp(join(config['workdir'], "43.somatic_ss_snvindel_vardict", "{sample}", "itvs", "{sample}.{itv}.vardict.vcf")),
     params:
@@ -184,14 +184,14 @@ rule somatic_ss__vardict_split:
         "cd {params.dir}\n"
         "grep ^chr {config[references][gatkbundle]}/scattered_calling_intervals/{wildcards.itv}/scattered.interval_list|"
         "    cut -f1-3 > {wildcards.itv}.bed"
-        "    > {log.out} 2> {log.err}\n"
+        "    2> {log.err}\n"
         "export JAVA_OPTS='\"-Xms60g\" \"-Xmx60g\"'"
-        "    >> {log.out} 2>> {log.err}\n"
+        "    > {log.out} 2>> {log.err}\n"
         "vardict-java "
         "    -G {config[references][gatkbundle]}/Homo_sapiens_assembly38.fasta "
         "    -f 0.05 "
         "    -N {wildcards.sample} "
-        "    -b {input.cram} "
+        "    -b {input.bam} "
         "    -th {threads} "
         "    -c 1 "
         "    -S 2 "
