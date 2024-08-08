@@ -81,7 +81,7 @@ rule somatic_ss__mutect2_merge:
     shell:
         "gatk --java-options \"-Xmx24g -Xms24g -Djava.io.tmpdir=/lscratch/$SLURM_JOB_ID\" MergeVcfs "
         "    {params.inputvcfs} "
-        "    -O {params.vcf} \n"
+        "    -O {params.vcf} "
         "    > {log.out} 2> {log.err}\n"
         "head -n 10000 {params.vcf} |grep '^#' > {params.vcfp} 2>>{log.err} \n"
         "grep -v '^#' {params.vcf} | grep PASS >> {params.vcfp} 2>>{log.err} \n"
@@ -150,7 +150,7 @@ rule somatic_ss__octopus_merge:
     shell:
         "gatk --java-options \"-Xmx24g -Xms24g -Djava.io.tmpdir=/lscratch/$SLURM_JOB_ID\" MergeVcfs "
         "    {params.inputvcfs} "
-        "    -O {params.vcf} \n"
+        "    -O {params.vcf} "
         "    > {log.out} 2> {log.err}\n"
         "head -n 10000 {params.vcf} |grep '^#' > {params.vcfp} 2>>{log.err} \n"
         "grep -v '^#' {params.vcf} | grep PASS >> {params.vcfp} 2>>{log.err} \n"
@@ -233,7 +233,7 @@ rule somatic_ss__vardict_merge:
     shell:
         "gatk --java-options \"-Xmx24g -Xms24g -Djava.io.tmpdir=/lscratch/$SLURM_JOB_ID\" MergeVcfs "
         "    {inputvcfs} "
-        "    -O {params.vcf} \n"
+        "    -O {params.vcf} "
         "    > {log.out} 2> {log.err}\n"
         "head -n 10000 {params.vcf} |grep '^#' > {params.vcfp} 2>>{log.err} \n"
         "grep -v '^#' {params.vcf} | grep PASS >> {params.vcfp} 2>>{log.err} \n"
