@@ -134,6 +134,8 @@ rule somatic_ss__octopus_merge:
     output:
         vcf  = join(config['workdir'], "42.somatic_ss_snvindel_octopus", "{sample}", "{sample}.octopus.vcf.gz"),
         vcfp = join(config['workdir'], "42.somatic_ss_snvindel_octopus", "{sample}", "{sample}.octopus.pass.vcf.gz"),
+    params:
+        dir  = join(config['workdir'], "42.somatic_ss_snvindel_octopus", "{sample}"),
     log:
         out = join(config['pipelinedir'], "logs", "somatic_ss__octopus_merge", "{sample}.o"),
         err = join(config['pipelinedir'], "logs", "somatic_ss__octopus_merge", "{sample}.e"),
