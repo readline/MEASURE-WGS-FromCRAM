@@ -262,3 +262,10 @@ somatic_ss__gripss:
     mem: '36g'
     time: '2-00:00:00'
     extra: ' --gres=lscratch:50'
+
+somatic_ss__dellysv:
+    partition: 'norm'
+    threads: 16
+    mem: '36g'
+    time: '2-00:00:00'
+    extra: ' --gres=lscratch:50'
