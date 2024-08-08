@@ -52,6 +52,10 @@ rule all:
             sample=dic_sample_to_runs,
         ),
         expand(
+            join(config['workdir'], "01.cram", "{sample}", "QC", "Mosdepth", "{sample}.mosdepth.summary.txt"),
+            sample=dic_sample_to_runs,
+        ),
+        expand(
             join( config['workdir'], "11.germline_snv_deepvariant", "{sample}", "{sample}.deepvariant.vcf.gz" ),
             sample=dic_sample_to_runs,
         ),
@@ -119,6 +123,10 @@ rule all:
         #     sample=tasks['somatic_ss'],
         # ),
         # expand(
+        #     join(config['workdir'], "43.somatic_ss_snvindel_vardict", "{sample}", "{sample}.vardict.pass.vcf.gz"),
+        #     sample=tasks['somatic_ss']+[i[0] for i in tasks['somatic_paired']],
+        # ),
+        # expand(
         #     join(config['workdir'], "44.somatic_ss_sv__gridss", "{sample}", "{sample}.gripss.filtered.vcf.gz"),
         #     sample=tasks['somatic_ss'],
         # ),
@@ -128,7 +136,7 @@ rule all:
         # ),
 
         expand(
-            join(config['workdir'], "43.somatic_ss_snvindel_vardict", "{sample}", "{sample}.vardict.pass.vcf.gz"),
+            join(config['workdir'], "46.somatic_ss_cnv__cnvkit", "{sample}", "cnvkit.ok"),
             sample=tasks['somatic_ss']+[i[0] for i in tasks['somatic_paired']],
         ),
 

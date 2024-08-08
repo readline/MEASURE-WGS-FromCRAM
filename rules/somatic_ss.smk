@@ -300,4 +300,32 @@ rule somatic_ss__dellysv:
         "tabix {output.vcfgz}"
         "  > {log.out} 2>> {log.err}\n"
 
-
+rule somatic_ss__cnvkit:
+    input:
+        bam = join(config['workdir'], "02.bam", "{sample}", "{sample}.bam"),
+        mosdepth = join(config['workdir'], "01.cram", "{sample}", "QC", "Mosdepth", "{sample}.mosdepth.summary.txt"),
+    output:
+        cns = join(config['workdir'], "46.somatic_ss_cnv__cnvkit", "{sample}", "{sample}.call.cns"),
+        ok = join(config['workdir'], "46.somatic_ss_cnv__cnvkit", "{sample}", "cnvkit.ok"),
+    params:
+        dir = join(config['workdir'], "46.somatic_ss_cnv__cnvkit", "{sample}"),
+    log:
+        out = join(config['pipelinedir'], "logs", "somatic_ss__cnvkit", "{sample}.o"),
+        err = join(config['pipelinedir'], "logs", "somatic_ss__cnvkit", "{sample}.e"),
+    threads:
+        int(allocated("threads", "somatic_ss__cnvkit", cluster))
+    container:
+        config['container']['cnvkit']
+    shell:
+        "cd {params.dir} \n"
+        "genderinfo=$(python {config[pipelinedir]}/scripts/getgender.py {input.mosdepth}) \n"
+        "cnvkit.py "
+        "   batch {input.bam} "
+        "   -m wgs "
+        "   -r {config[references][pon]}/CNVkit.pon.cnn "
+        "   --output-dir {params.dir} "
+        "   --scatter "
+        "   -p {threads} "
+        "   $genderinfo "
+        "  > {log.out} 2> {log.err}\n"
+        "touch {output.ok}"
