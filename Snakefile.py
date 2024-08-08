@@ -80,10 +80,10 @@ rule all:
             join(config['workdir'], "15.germline_sv_gridss", "{sample}", "gripss_germline", "{sample}.gripss.filtered.vcf.gz"),
             sample=tasks['germline'],
         ),
-        expand(
-            join(config['workdir'], "16.germline_sv_virusbreakend", "{sample}", "{sample}.virusbreakend.vcf"),
-            sample=dic_sample_to_runs,
-        ),
+        # expand(
+        #     join(config['workdir'], "16.germline_sv_virusbreakend", "{sample}", "{sample}.virusbreakend.vcf"),
+        #     sample=dic_sample_to_runs,
+        # ),
         expand(
             join(config['workdir'], "17.germline_cnv_canvas", "{sample}", "CNV.vcf.gz"),
             sample=dic_sample_to_runs,
@@ -110,16 +110,20 @@ rule all:
         ),
 
 
-        expand(
-            join(config['workdir'], "41.somatic_ss_snvindel_mutect2", "{sample}", "{sample}.mutect2.pass.vcf.gz"),
-            sample=tasks['somatic_ss'],
-        ),
-        expand(
-            join(config['workdir'], "42.somatic_ss_snvindel_octopus", "{sample}", "{sample}.octopus.pass.vcf.gz"),
-            sample=tasks['somatic_ss'],
-        ),
+        # expand(
+        #     join(config['workdir'], "41.somatic_ss_snvindel_mutect2", "{sample}", "{sample}.mutect2.pass.vcf.gz"),
+        #     sample=tasks['somatic_ss'],
+        # ),
+        # expand(
+        #     join(config['workdir'], "42.somatic_ss_snvindel_octopus", "{sample}", "{sample}.octopus.pass.vcf.gz"),
+        #     sample=tasks['somatic_ss'],
+        # ),
+        # expand(
+        #     join(config['workdir'], "44.somatic_ss_sv__gridss", "{sample}", "{sample}.gripss.filtered.vcf.gz"),
+        #     sample=tasks['somatic_ss'],
+        # ),
 
         expand(
-            join(config['workdir'], "44.somatic_ss_sv__gridss", "{sample}", "{sample}.gripss.filtered.vcf.gz"),
+            join(config['workdir'], "45.somatic_ss_sv__delly", "{sample}", "{sample}.delly.vcf.gz"),
             sample=tasks['somatic_ss'],
         ),

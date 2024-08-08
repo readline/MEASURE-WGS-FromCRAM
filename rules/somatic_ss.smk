@@ -191,3 +191,30 @@ rule somatic_ss__gripss:
         "  -vcf {input.vcf} "
         "  -output_dir {params.dir}"
         "  > {log.out} 2> {log.err}\n"
+
+rule somatic_ss__dellysv:
+    input:
+        cram = join(config['workdir'], "01.cram", "{sample}", "{sample}.cram"),
+    output:
+        vcfgz = join(config['workdir'], "45.somatic_ss_sv__delly", "{sample}", "{sample}.delly.vcf.gz"),
+    params:
+        vcf = join(config['workdir'], "45.somatic_ss_sv__delly", "{sample}", "{sample}.delly.vcf"),
+    log:
+        out = join(config['pipelinedir'], "logs", "somatic_ss__dellysv", "{sample}.o"),
+        err = join(config['pipelinedir'], "logs", "somatic_ss__dellysv", "{sample}.e"),
+    threads:
+        int(allocated("threads", "somatic_ss__dellysv", cluster))
+    container:
+        config['container']['delly']
+    shell:
+        "delly call "
+        "    -g {config[references][gatkbundle]}/Homo_sapiens_assembly38.fasta "
+        "    -x {config[references][delly]}/human.hg38.excl.tsv "
+        "    {input.cram}"
+        "    > {params.vcf} |"
+        "bgzip > {output.vcfgz}"
+        "    2> {log.err}\n"
+        "tabix {output.vcfgz}"
+        "  > {log.out} 2>> {log.err}\n"
+
+
