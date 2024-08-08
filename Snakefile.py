@@ -111,9 +111,14 @@ rule all:
 
 
         expand(
-            join(config['workdir'], "41.somatic_ss_snvindel_mutect2", "{sample}", "{sample}.mutect2.pass.vcf"),
+            join(config['workdir'], "41.somatic_ss_snvindel_mutect2", "{sample}", "{sample}.mutect2.pass.vcf.gz"),
             sample=tasks['somatic_ss'],
         ),
+        expand(
+            join(config['workdir'], "42.somatic_ss_snvindel_octopus", "{sample}", "{sample}.octopus.pass.vcf.gz"),
+            sample=tasks['somatic_ss'],
+        ),
+
         expand(
             join(config['workdir'], "44.somatic_ss_sv__gridss", "{sample}", "{sample}.gripss.filtered.vcf.gz"),
             sample=tasks['somatic_ss'],

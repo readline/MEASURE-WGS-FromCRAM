@@ -29,10 +29,12 @@ rule somatic_ss__mutect2_split:
         "    -germline-resource {config[references][gatksomatic]}/af-only-gnomad.hg38.vcf.gz "
         "    --f1r2-tar-gz {params.f1r2} "
         "    > {log.out} 2> {log.err}\n"
+        "echo 1 >> {log.out}\n"
         "gatk --java-options \"-Xmx24g -Xms24g -Djava.io.tmpdir=/lscratch/$SLURM_JOB_ID\" LearnReadOrientationModel "
         "    -O {params.rom} "
         "    -I {params.f1r2}"
         "    >> {log.out} 2>> {log.err}\n"
+        "echo 2 >> {log.out}\n"
         "gatk --java-options \"-Xmx24g -Xms24g -Djava.io.tmpdir=/lscratch/$SLURM_JOB_ID\" GetPileupSummaries "
         "    -R {config[references][gatkbundle]}/Homo_sapiens_assembly38.fasta "
         "    -I {input.cram} "
@@ -40,11 +42,13 @@ rule somatic_ss__mutect2_split:
         "    -L {wildcards.chr} "
         "    -O {params.pst} "
         "    >> {log.out} 2>> {log.err}\n"
+        "echo 3 >> {log.out}\n"
         "gatk --java-options \"-Xmx24g -Xms24g -Djava.io.tmpdir=/lscratch/$SLURM_JOB_ID\" CalculateContamination "
         "    -I {params.pst} "
         "    -tumor-segmentation {params.st}  "
         "    -O $sample.$chr.calculatecontamination.table "
         "    >> {log.out} 2>> {log.err}\n"
+        "echo 4 >> {log.out}\n"
         "gatk --java-options \"-Xmx24g -Xms24g -Djava.io.tmpdir=/lscratch/$SLURM_JOB_ID\" FilterMutectCalls "
         "    --reference {config[references][gatkbundle]}/Homo_sapiens_assembly38.fasta "
         "    -V {params.vcf} "
@@ -52,6 +56,7 @@ rule somatic_ss__mutect2_split:
         "    --ob-priors {params.rom} "
         "    -O {output.vcf} "
         "    >> {log.out} 2>> {log.err}\n"
+        "echo 5 >> {log.out}\n"
 
 rule somatic_ss__mutect2_merge:
     input:
@@ -64,6 +69,7 @@ rule somatic_ss__mutect2_merge:
         dir  = join(config['workdir'], "41.somatic_ss_snvindel_mutect2", "{sample}"),
         vcf  = join(config['workdir'], "41.somatic_ss_snvindel_mutect2", "{sample}", "{sample}.mutect2.vcf"),
         vcfp = join(config['workdir'], "41.somatic_ss_snvindel_mutect2", "{sample}", "{sample}.mutect2.pass.vcf"),
+        inputvcfs=lambda wildcards, input: " ".join("-I {} ".format(in_) for in_ in input.vcfs),
     log:
         out = join(config['pipelinedir'], "logs", "somatic_ss__mutect2_merge", "{sample}.o"),
         err = join(config['pipelinedir'], "logs", "somatic_ss__mutect2_merge", "{sample}.e"),
@@ -73,8 +79,7 @@ rule somatic_ss__mutect2_merge:
         config['container']['gatk']
     shell:
         "gatk --java-options \"-Xmx24g -Xms24g -Djava.io.tmpdir=/lscratch/$SLURM_JOB_ID\" MergeVcfs "
-        "    {input.vcfs} | "
-        "    awk '{printf \"-I %s \", $0}') "
+        "    {params.inputvcfs} "
         "    -O {params.vcf} \n"
         "    > {log.out} 2> {log.err}\n"
         "head -n 10000 {params.vcf} |grep '^#' > {params.vcfp} 2>>{log.err} \n"
@@ -106,13 +111,13 @@ rule somatic_ss__octopus_split:
     container:
         config['container']['octopus']
     shell:
-        "mkdir -p {params.dir}\n"
+        "mkdir -p {params.dir}/tmp\n"
         "cd {params.dir}\n"
         "octopus "
         "    --threads {threads} "
         "    -C cancer "
         "    --working-directory {params.dir} "
-        "    --temp-directory-prefix /lscratch/$SLURM_JOB_ID/ "
+        "    --temp-directory-prefix tmp "
         "    -R {config[references][gatkbundle]}/Homo_sapiens_assembly38.fasta "
         "    -I {input.cram} "
         "    -o {output.vcf} "
@@ -133,6 +138,7 @@ rule somatic_ss__octopus_merge:
         dir  = join(config['workdir'], "42.somatic_ss_snvindel_octopus", "{sample}"),
         vcf  = join(config['workdir'], "42.somatic_ss_snvindel_octopus", "{sample}", "{sample}.octopus.vcf"),
         vcfp = join(config['workdir'], "42.somatic_ss_snvindel_octopus", "{sample}", "{sample}.octopus.pass.vcf"),
+        inputvcfs=lambda wildcards, input: " ".join("-I {} ".format(in_) for in_ in input.vcfs),
     log:
         out = join(config['pipelinedir'], "logs", "somatic_ss__octopus_merge", "{sample}.o"),
         err = join(config['pipelinedir'], "logs", "somatic_ss__octopus_merge", "{sample}.e"),
@@ -142,8 +148,7 @@ rule somatic_ss__octopus_merge:
         config['container']['gatk']
     shell:
         "gatk --java-options \"-Xmx24g -Xms24g -Djava.io.tmpdir=/lscratch/$SLURM_JOB_ID\" MergeVcfs "
-        "    {input.vcfs} | "
-        "    awk '{printf \"-I %s \", $0}') "
+        "    {params.inputvcfs} "
         "    -O {params.vcf} \n"
         "    > {log.out} 2> {log.err}\n"
         "head -n 10000 {params.vcf} |grep '^#' > {params.vcfp} 2>>{log.err} \n"
