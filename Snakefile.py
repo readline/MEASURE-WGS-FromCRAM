@@ -31,6 +31,9 @@ include: join(config['pipelinedir'], "rules", "germline.smk")
 include: join(config['pipelinedir'], "rules", "somatic_ss.smk")
 include: join(config['pipelinedir'], "rules", "somatic_paired.smk")
 
+# include wrappers
+include: join(config['pipelinedir'], "rules", "wrappers", "vcf2tbi.smk")
+
 
 
 rule all:
@@ -114,10 +117,10 @@ rule all:
         #     join(config['workdir'], "41.somatic_ss_snvindel_mutect2", "{sample}", "{sample}.mutect2.pass.vcf.gz"),
         #     sample=tasks['somatic_ss'],
         # ),
-        # expand(
-        #     join(config['workdir'], "42.somatic_ss_snvindel_octopus", "{sample}", "{sample}.octopus.pass.vcf.gz"),
-        #     sample=tasks['somatic_ss'],
-        # ),
+        expand(
+            join(config['workdir'], "42.somatic_ss_snvindel_octopus", "{sample}", "{sample}.octopus.pass.vcf.gz"),
+            sample=tasks['somatic_ss'],
+        ),
         # expand(
         #     join(config['workdir'], "44.somatic_ss_sv__gridss", "{sample}", "{sample}.gripss.filtered.vcf.gz"),
         #     sample=tasks['somatic_ss'],
@@ -127,8 +130,8 @@ rule all:
         #     sample=tasks['somatic_ss'],
         # ),
 
-        expand(
-            join(config['workdir'], "43.somatic_ss_snvindel_vardict", "{sample}", "{sample}.vardict.pass.vcf.gz"),
-            sample=tasks['somatic_ss']+[i[0] for i in tasks['somatic_paired']],
-        ),
+        # expand(
+        #     join(config['workdir'], "43.somatic_ss_snvindel_vardict", "{sample}", "{sample}.vardict.pass.vcf.gz"),
+        #     sample=tasks['somatic_ss']+[i[0] for i in tasks['somatic_paired']],
+        # ),
 
