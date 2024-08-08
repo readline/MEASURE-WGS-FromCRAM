@@ -241,3 +241,17 @@ somatic_ss__mutect2_merge:
     mem: '32g'
     time: '2-00:00:00'
     extra: ' --gres=lscratch:50'
+
+somatic_ss__octopus_split:
+    partition: 'norm'
+    threads: 32
+    mem: '64g'
+    time: '2-00:00:00'
+    extra: ' --gres=lscratch:100'
+
+somatic_ss__octopus_merge:
+    partition: 'norm'
+    threads: 4
+    mem: '32g'
+    time: '2-00:00:00'
+    extra: ' --gres=lscratch:50'

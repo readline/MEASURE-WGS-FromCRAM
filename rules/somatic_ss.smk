@@ -58,12 +58,12 @@ rule somatic_ss__mutect2_merge:
         vcfs =lambda wildcards: \
              ["{}/41.somatic_ss_snvindel_mutect2/{}/chroms/{}.{}.mutect2.vcf".format(config['workdir'], wildcards.sample, wildcards.sample, chrid) for chrid in ['chr%d'%(i) for i in range(1,23)]+['chrX','chrY']],
     output:
-        vcf  = join(config['workdir'], "41.somatic_ss_snvindel_mutect2", "{sample}", "{sample}.mutect2.vcf"),
-        vcfp = join(config['workdir'], "41.somatic_ss_snvindel_mutect2", "{sample}", "{sample}.mutect2.pass.vcf"),
-    params:
-        dir  = join(config['workdir'], "41.somatic_ss_snvindel_mutect2", "{sample}"),
         vcf  = join(config['workdir'], "41.somatic_ss_snvindel_mutect2", "{sample}", "{sample}.mutect2.vcf.gz"),
         vcfp = join(config['workdir'], "41.somatic_ss_snvindel_mutect2", "{sample}", "{sample}.mutect2.pass.vcf.gz"),
+    params:
+        dir  = join(config['workdir'], "41.somatic_ss_snvindel_mutect2", "{sample}"),
+        vcf  = join(config['workdir'], "41.somatic_ss_snvindel_mutect2", "{sample}", "{sample}.mutect2.vcf"),
+        vcfp = join(config['workdir'], "41.somatic_ss_snvindel_mutect2", "{sample}", "{sample}.mutect2.pass.vcf"),
     log:
         out = join(config['pipelinedir'], "logs", "somatic_ss__mutect2_merge", "{sample}.o"),
         err = join(config['pipelinedir'], "logs", "somatic_ss__mutect2_merge", "{sample}.e"),
@@ -89,6 +89,76 @@ rule somatic_ss__mutect2_merge:
         "    >> {log.out} 2>> {log.err}\n"
         "rm -rf {params.dir}/chroms"
         "    >> {log.out} 2>> {log.err}\n"
+
+
+rule somatic_ss__octopus_split:
+    input:
+        cram = join(config['workdir'], "01.cram", "{sample}", "{sample}.cram"),
+    output:
+        vcf = temp(join(config['workdir'], "42.somatic_ss_snvindel_octopus", "{sample}", "chroms", "{sample}.{chr}.octopus.vcf")),
+    params:
+        dir = join(config['workdir'], "42.somatic_ss_snvindel_octopus", "{sample}", "chroms", "{chr}"),
+    log:
+        out = join(config['pipelinedir'], "logs", "somatic_ss__octopus_split", "{sample}.{chr}.o"),
+        err = join(config['pipelinedir'], "logs", "somatic_ss__octopus_split", "{sample}.{chr}.e"),
+    threads:
+        int(allocated("threads", "somatic_ss__octopus_split", cluster))
+    container:
+        config['container']['octopus']
+    shell:
+        "mkdir -p {params.dir}\n"
+        "cd {params.dir}\n"
+        "octopus "
+        "    --threads {threads} "
+        "    -C cancer "
+        "    --working-directory {params.dir} "
+        "    --temp-directory-prefix /lscratch/$SLURM_JOB_ID/ "
+        "    -R {config[references][gatkbundle]}/Homo_sapiens_assembly38.fasta "
+        "    -I {input.cram} "
+        "    -o {output.vcf} "
+        "    --forest-model /opt/octopus/resources/forests/germline.v0.7.4.forest "
+        "    --somatic-forest-model /opt/octopus/resources/forests/somatic.v0.7.4.forest "
+        "    --annotations AC AD DP "
+        "    -T {wildcards.chr} "
+        "    > {log.out} 2> {log.err}\n"
+
+rule somatic_ss__octopus_merge:
+    input:
+        vcfs =lambda wildcards: \
+             ["{}/42.somatic_ss_snvindel_octopus/{}/chroms/{}.{}.octopus.vcf".format(config['workdir'], wildcards.sample, wildcards.sample, chrid) for chrid in ['chr%d'%(i) for i in range(1,23)]+['chrX','chrY']],
+    output:
+        vcf  = join(config['workdir'], "42.somatic_ss_snvindel_octopus", "{sample}", "{sample}.octopus.vcf.gz"),
+        vcfp = join(config['workdir'], "42.somatic_ss_snvindel_octopus", "{sample}", "{sample}.octopus.pass.vcf.gz"),
+    params:
+        dir  = join(config['workdir'], "42.somatic_ss_snvindel_octopus", "{sample}"),
+        vcf  = join(config['workdir'], "42.somatic_ss_snvindel_octopus", "{sample}", "{sample}.octopus.vcf"),
+        vcfp = join(config['workdir'], "42.somatic_ss_snvindel_octopus", "{sample}", "{sample}.octopus.pass.vcf"),
+    log:
+        out = join(config['pipelinedir'], "logs", "somatic_ss__octopus_merge", "{sample}.o"),
+        err = join(config['pipelinedir'], "logs", "somatic_ss__octopus_merge", "{sample}.e"),
+    threads:
+        int(allocated("threads", "somatic_ss__octopus_merge", cluster))
+    container:
+        config['container']['gatk']
+    shell:
+        "gatk --java-options \"-Xmx24g -Xms24g -Djava.io.tmpdir=/lscratch/$SLURM_JOB_ID\" MergeVcfs "
+        "    {input.vcfs} | "
+        "    awk '{printf \"-I %s \", $0}') "
+        "    -O {params.vcf} \n"
+        "    > {log.out} 2> {log.err}\n"
+        "head -n 10000 {params.vcf} |grep '^#' > {params.vcfp} 2>>{log.err} \n"
+        "grep -v '^#' {params.vcf} | grep PASS >> {params.vcfp} 2>>{log.err} \n"
+        "bgzip  {params.vcf} "
+        "    >> {log.out} 2>> {log.err}\n"
+        "bgzip  {params.vcfp} "
+        "    >> {log.out} 2>> {log.err}\n"
+        "tabix -p vcf {output.vcfp} "
+        "    >> {log.out} 2>> {log.err}\n"
+        "tabix -p vcf {output.vcf} "
+        "    >> {log.out} 2>> {log.err}\n"
+        "rm -rf {params.dir}/chroms"
+        "    >> {log.out} 2>> {log.err}\n"
+
 
 rule somatic_ss__gripss:
     input:
