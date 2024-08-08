@@ -77,7 +77,11 @@ rule all:
             sample=dic_sample_to_runs,
         ),
         expand(
-            join(config['workdir'], "15.germline_sv_gridss", "{sample}", "virusbreakend", "{sample}.virusbreakend.vcf"),
+            join(config['workdir'], "15.germline_sv_gridss", "{sample}", "gripss_germline", "{sample}.gripss.filtered.vcf.gz"),
+            sample=tasks['germline'],
+        ),
+        expand(
+            join(config['workdir'], "16.germline_sv_virusbreakend", "{sample}", "{sample}.virusbreakend.vcf"),
             sample=dic_sample_to_runs,
         ),
         expand(
@@ -103,4 +107,14 @@ rule all:
         expand(
             join(config['workdir'], "25.germline_hla-la", "{sample}", "hla", "summaryStatistics.txt"),
             sample=dic_sample_to_runs,
+        ),
+
+
+        expand(
+            join(config['workdir'], "41.somatic_ss_snvindel_mutect2", "{sample}", "{sample}.mutect2.pass.vcf"),
+            sample=tasks['somatic_ss'],
+        ),
+        expand(
+            join(config['workdir'], "44.somatic_ss_sv__gridss", "{sample}", "{sample}.gripss.filtered.vcf.gz"),
+            sample=tasks['somatic_ss'],
         ),
