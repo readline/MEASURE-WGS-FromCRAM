@@ -134,11 +134,6 @@ rule somatic_ss__octopus_merge:
     output:
         vcf  = join(config['workdir'], "42.somatic_ss_snvindel_octopus", "{sample}", "{sample}.octopus.vcf.gz"),
         vcfp = join(config['workdir'], "42.somatic_ss_snvindel_octopus", "{sample}", "{sample}.octopus.pass.vcf.gz"),
-    params:
-        dir  = join(config['workdir'], "42.somatic_ss_snvindel_octopus", "{sample}"),
-        vcf  = join(config['workdir'], "42.somatic_ss_snvindel_octopus", "{sample}", "{sample}.octopus.vcf"),
-        vcfp = join(config['workdir'], "42.somatic_ss_snvindel_octopus", "{sample}", "{sample}.octopus.pass.vcf"),
-        inputvcfs=lambda wildcards, input: " ".join("-I {} ".format(in_) for in_ in input.vcfs),
     log:
         out = join(config['pipelinedir'], "logs", "somatic_ss__octopus_merge", "{sample}.o"),
         err = join(config['pipelinedir'], "logs", "somatic_ss__octopus_merge", "{sample}.e"),
@@ -147,15 +142,17 @@ rule somatic_ss__octopus_merge:
     container:
         config['container']['gatk']
     shell:
-        "gatk --java-options \"-Xmx24g -Xms24g -Djava.io.tmpdir=/lscratch/$SLURM_JOB_ID\" MergeVcfs "
-        "    {params.inputvcfs} "
-        "    -O {params.vcf} \n"
+        "bcftools concat "
+        "    -a "
+        "    -O z "
+        "    -o {output.vcf} "
+        "    {input.vcfs} "
         "    > {log.out} 2> {log.err}\n"
-        "head -n 10000 {params.vcf} |grep '^#' > {params.vcfp} 2>>{log.err} \n"
-        "grep -v '^#' {params.vcf} | grep PASS >> {params.vcfp} 2>>{log.err} \n"
-        "bgzip  {params.vcf} "
-        "    >> {log.out} 2>> {log.err}\n"
-        "bgzip  {params.vcfp} "
+        "bcftools view "
+        "    -f 'PASS' "
+        "    {output.vcf}"
+        "    -O z "
+        "    -o {output.vcfp}"
         "    >> {log.out} 2>> {log.err}\n"
         "tabix -p vcf {output.vcfp} "
         "    >> {log.out} 2>> {log.err}\n"
