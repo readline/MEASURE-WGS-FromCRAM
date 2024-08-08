@@ -329,3 +329,98 @@ rule somatic_ss__cnvkit:
         "   $genderinfo "
         "  > {log.out} 2> {log.err}\n"
         "touch {output.ok}"
+
+rule somatic_ss__amber:
+    input:
+        cram = join(config['workdir'], "01.cram", "{sample}", "{sample}.cram"),
+    output:
+        ok = join(config['workdir'], "47.somatic_ss_cnv__purple", "{sample}", "amber", "amber.ok"),
+    params:
+        dir = join(config['workdir'], "47.somatic_ss_cnv__purple", "{sample}", "amber"),
+    log:
+        out = join(config['pipelinedir'], "logs", "somatic_ss__amber", "{sample}.o"),
+        err = join(config['pipelinedir'], "logs", "somatic_ss__amber", "{sample}.e"),
+    threads:
+        int(allocated("threads", "somatic_ss__amber", cluster))
+    container:
+        config['container']['hmftools']
+    shell:
+        "cd {params.dir}"
+        "java -Xmx24G "
+        "    -jar /usr/local/share/hmftools-amber-4.0-0/amber.jar "
+        "    -tumor {wildcards.sample} "
+        "    -tumor_bam {input.cram} "
+        "    -output_dir {params.dir} "
+        "    -threads {threads} "
+        "    -loci {config[references][hmftools]}/ref/38/copy_number/AmberGermlineSites.38.tsv.gz "
+        "    -ref_genome {config[references][gatkbundle]}/Homo_sapiens_assembly38.fasta "
+        "    -ref_genome_version 38"
+        "  > {log.out} 2> {log.err}\n"
+        "touch {output.ok}"
+
+rule somatic_ss__cobalt:
+    input:
+        cram = join(config['workdir'], "01.cram", "{sample}", "{sample}.cram"),
+    output:
+        ok = join(config['workdir'], "47.somatic_ss_cnv__purple", "{sample}", "cobalt", "cobalt.ok"),
+    params:
+        dir = join(config['workdir'], "47.somatic_ss_cnv__purple", "{sample}", "cobalt"),
+    log:
+        out = join(config['pipelinedir'], "logs", "somatic_ss__cobalt", "{sample}.o"),
+        err = join(config['pipelinedir'], "logs", "somatic_ss__cobalt", "{sample}.e"),
+    threads:
+        int(allocated("threads", "somatic_ss__cobalt", cluster))
+    container:
+        config['container']['hmftools']
+    shell:
+        "cd {params.dir}"
+        "java -Xmx12G "
+        "    -jar /usr/local/share/hmftools-cobalt-1.16-0/cobalt.jar "
+        "    -tumor {wildcards.sample} "
+        "    -tumor_bam {input.cram} "
+        "    -output_dir {params.dir} "
+        "    -threads {threads} "
+        "    -ref_genome {config[references][gatkbundle]}/Homo_sapiens_assembly38.fasta "
+        "    -tumor_only_diploid_bed {config[references][hmftools]}/ref/38/copy_number/DiploidRegions.38.bed.gz "
+        "    -gc_profile {config[references][hmftools]}/ref/38/copy_number/GC_profile.1000bp.38.cnp"
+        "  > {log.out} 2> {log.err}\n"
+        "touch {output.ok}"
+
+rule somatic_ss__purple:
+    input:
+        cram = join(config['workdir'], "01.cram", "{sample}", "{sample}.cram"),
+        amber = join(config['workdir'], "47.somatic_ss_cnv__purple", "{sample}", "amber", "amber.ok"),
+        cobalt = join(config['workdir'], "47.somatic_ss_cnv__purple", "{sample}", "cobalt", "cobalt.ok"),
+        mutect = join(config['workdir'], "41.somatic_ss_snvindel_mutect2", "{sample}", "{sample}.mutect2.pass.vcf.gz"),
+        gripss = join(config['workdir'], "44.somatic_ss_sv__gridss", "{sample}", "{sample}.gripss.filtered.vcf.gz"),
+    output:
+        vcf = join(config['workdir'], "47.somatic_ss_cnv__purple", "{sample}", "M00001_TOD_BM.purple.sv.vcf.gz"),
+    params:
+        dir = join(config['workdir'], "47.somatic_ss_cnv__purple", "{sample}"),
+        inputvcfs=lambda wildcards, input: " ".join("-I {} ".format(in_) for in_ in input.vcfs),
+        gripssraw = lambda wildcards, input: input.gripss.replace('filtered.','')
+    log:
+        out = join(config['pipelinedir'], "logs", "somatic_ss__purple", "{sample}.o"),
+        err = join(config['pipelinedir'], "logs", "somatic_ss__purple", "{sample}.e"),
+    threads:
+        int(allocated("threads", "somatic_ss__purple", cluster))
+    container:
+        config['container']['hmftools']
+    shell:
+        "cd {params.dir}"
+        "java -Xmx24G "
+        "    -jar /usr/local/share/hmftools-purple-4.0.2-0/purple.jar "
+        "    -tumor M00001_TOD_BM "
+        "    -amber $(dirname $(realpath {input.amber})) "
+        "    -cobalt $(dirname $(realpath {input.cobalt})) "
+        "    -gc_profile {config[references][hmftools]}/ref/38/copy_number/GC_profile.1000bp.38.cnp "
+        "    -ref_genome {config[references][gatkbundle]}/Homo_sapiens_assembly38.fasta "
+        "    -ref_genome_version 38 "
+        "    -ensembl_data_dir {config[references][hmftools]}/ref/38/common/ensembl_data "
+        "    -somatic_vcf {input.mutect} "
+        "    -structural_vcf {input.gripss} "
+        "    -sv_recovery_vcf {params.gripssraw} "
+        "    -run_drivers "
+        "    -driver_gene_panel {config[references][hmftools]}/ref/38/common/DriverGenePanel.38.tsv "
+        "    -output_dir {output.vcf}"
+        "  > {log.out} 2> {log.err}\n"
