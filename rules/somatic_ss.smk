@@ -164,6 +164,89 @@ rule somatic_ss__octopus_merge:
         "rm -rf {params.dir}/chroms"
         "    >> {log.out} 2>> {log.err}\n"
 
+rule somatic_ss__vardict_split:
+    input:
+        cram = join(config['workdir'], "01.cram", "{sample}", "{sample}.cram"),
+    output:
+        vcf = temp(join(config['workdir'], "43.somatic_ss_snvindel_vardict", "{sample}", "itvs", "{sample}.{itv}.vardict.vcf")),
+    params:
+        dir = join(config['workdir'], "43.somatic_ss_snvindel_vardict", "{sample}", "itvs"),
+        temp= "/lscratch/$SLURM_JOB_ID/{sample}.{itv}.txt"
+    log:
+        out = join(config['pipelinedir'], "logs", "somatic_ss__vardict_split", "{sample}.{itv}.o"),
+        err = join(config['pipelinedir'], "logs", "somatic_ss__vardict_split", "{sample}.{itv}.e"),
+    threads:
+        int(allocated("threads", "somatic_ss__vardict_split", cluster))
+    container:
+        config['container']['vardict']
+    shell:
+        "cd {params.dir}"
+        "grep ^chr {config[references][gatkbundle]}/scattered_calling_intervals/{wildcards.itv}/scattered.interval_list|"
+        "    cut -f1-3 > {wildcards.itv}.bed"
+        "    > {log.out} 2> {log.err}\n"
+        "export JAVA_OPTS='\"-Xms60g\" \"-Xmx60g\"'"
+        "    >> {log.out} 2>> {log.err}\n"
+        "vardict-java "
+        "    -G {config[references][gatkbundle]}/Homo_sapiens_assembly38.fasta "
+        "    -f 0.05 "
+        "    -N {wildcards.sample} "
+        "    -b {input.cram} "
+        "    -th {threads} "
+        "    -c 1 "
+        "    -S 2 "
+        "    -E 3 "
+        "    {wildcards.itv}.bed |
+        "teststrandbias.R "
+        "    -N {wildcards.sample} "
+        "    -E "
+        "    -f 0.05 > {params.temp} "
+        "    2>> {log.err}\n"
+        "var2vcf_valid.pl "
+        "    -N {wildcards.sample} "
+        "    -E "
+        "    -f 0.05 "
+        "    {params.temp} "
+        "    > {output.vcf} "
+        "    2>> {log.err}\n"
+
+rule somatic_ss__vardict_merge:
+    input:
+        vcfs =lambda wildcards: \
+             ["{}/43.somatic_ss_snvindel_vardict/{}/itvs/{}.{}.vardict.vcf".format(config['workdir'], wildcards.sample, wildcards.sample, itv) \
+                for itv in ['temp_%.4d_of_%d'%(i,config['parameter']['gatkitv']) for i in range(1,config['parameter']['gatkitv']+1)]],
+    output:
+        vcf  = join(config['workdir'], "43.somatic_ss_snvindel_vardict", "{sample}", "{sample}.vardict.vcf.gz"),
+        vcfp = join(config['workdir'], "43.somatic_ss_snvindel_vardict", "{sample}", "{sample}.vardict.pass.vcf.gz"),
+    params:
+        dir  = join(config['workdir'], "43.somatic_ss_snvindel_vardict", "{sample}"),
+        vcf  = join(config['workdir'], "43.somatic_ss_snvindel_vardict", "{sample}", "{sample}.vardict.vcf"),
+        vcfp = join(config['workdir'], "43.somatic_ss_snvindel_vardict", "{sample}", "{sample}.vardict.pass.vcf"),
+        inputvcfs=lambda wildcards, input: " ".join("-I {} ".format(in_) for in_ in input.vcfs),
+    log:
+        out = join(config['pipelinedir'], "logs", "somatic_ss__vardict_merge", "{sample}.o"),
+        err = join(config['pipelinedir'], "logs", "somatic_ss__vardict_merge", "{sample}.e"),
+    threads:
+        int(allocated("threads", "somatic_ss__vardict_merge", cluster))
+    container:
+        config['container']['gatk']
+    shell:
+        "gatk --java-options \"-Xmx24g -Xms24g -Djava.io.tmpdir=/lscratch/$SLURM_JOB_ID\" MergeVcfs "
+        "    {inputvcfs} "
+        "    -O {params.vcf} \n"
+        "    > {log.out} 2> {log.err}\n"
+        "head -n 10000 {params.vcf} |grep '^#' > {params.vcfp} 2>>{log.err} \n"
+        "grep -v '^#' {params.vcf} | grep PASS >> {params.vcfp} 2>>{log.err} \n"
+        "bgzip  {params.vcf} "
+        "    >> {log.out} 2>> {log.err}\n"
+        "bgzip  {params.vcfp} "
+        "    >> {log.out} 2>> {log.err}\n"
+        "tabix -p vcf {output.vcfp} "
+        "    >> {log.out} 2>> {log.err}\n"
+        "tabix -p vcf {output.vcf} "
+        "    >> {log.out} 2>> {log.err}\n"
+        "rm -rf {params.dir}/itvs"
+        "    >> {log.out} 2>> {log.err}\n"
+
 
 rule somatic_ss__gripss:
     input:

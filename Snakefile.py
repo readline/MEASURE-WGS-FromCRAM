@@ -122,8 +122,13 @@ rule all:
         #     join(config['workdir'], "44.somatic_ss_sv__gridss", "{sample}", "{sample}.gripss.filtered.vcf.gz"),
         #     sample=tasks['somatic_ss'],
         # ),
+        # expand(
+        #     join(config['workdir'], "45.somatic_ss_sv__delly", "{sample}", "{sample}.delly.vcf.gz"),
+        #     sample=tasks['somatic_ss'],
+        # ),
 
         expand(
-            join(config['workdir'], "45.somatic_ss_sv__delly", "{sample}", "{sample}.delly.vcf.gz"),
-            sample=tasks['somatic_ss'],
+            join(config['workdir'], "43.somatic_ss_snvindel_vardict", "{sample}", "{sample}.vardict.pass.vcf.gz"),
+            sample=tasks['somatic_ss']+tasks['somatic_paired'],
         ),
+
