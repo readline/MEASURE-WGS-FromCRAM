@@ -134,9 +134,12 @@ rule all:
         #     join(config['workdir'], "45.somatic_ss_sv__delly", "{sample}", "{sample}.delly.vcf.gz"),
         #     sample=tasks['somatic_ss'],
         # ),
-
+        # expand(
+        #     join(config['workdir'], "46.somatic_ss_cnv__cnvkit", "{sample}", "cnvkit.ok"),
+        #     sample=tasks['somatic_ss']+[i[0] for i in tasks['somatic_paired']],
+        # ),
         expand(
-            join(config['workdir'], "46.somatic_ss_cnv__cnvkit", "{sample}", "cnvkit.ok"),
+            # join(config['workdir'], "47.somatic_ss_cnv__purple", "{sample}", "M00001_TOD_BM.purple.sv.vcf.gz"),
+            join(config['workdir'], "47.somatic_ss_cnv__purple", "{sample}", "amber", "amber.ok"),
             sample=tasks['somatic_ss']+[i[0] for i in tasks['somatic_paired']],
         ),
-

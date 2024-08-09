@@ -345,9 +345,9 @@ rule somatic_ss__amber:
     container:
         config['container']['amber']
     shell:
-        "cd {params.dir}"
+        "cd {params.dir} \n"
         "java -Xmx24G "
-        "    -jar /usr/local/share/hmftools-amber-4.0-1/amber.jar "
+        "    -jar /usr/local/share/hmftools-amber-4.0.1-0/amber.jar "
         "    -tumor {wildcards.sample} "
         "    -tumor_bam {input.cram} "
         "    -output_dir {params.dir} "
@@ -373,7 +373,7 @@ rule somatic_ss__cobalt:
     container:
         config['container']['cobalt']
     shell:
-        "cd {params.dir}"
+        "cd {params.dir} \n"
         "java -Xmx12G "
         "    -jar /usr/local/share/hmftools-cobalt-1.16-0/cobalt.jar "
         "    -tumor {wildcards.sample} "
@@ -397,7 +397,6 @@ rule somatic_ss__purple:
         vcf = join(config['workdir'], "47.somatic_ss_cnv__purple", "{sample}", "M00001_TOD_BM.purple.sv.vcf.gz"),
     params:
         dir = join(config['workdir'], "47.somatic_ss_cnv__purple", "{sample}"),
-        inputvcfs=lambda wildcards, input: " ".join("-I {} ".format(in_) for in_ in input.vcfs),
         gripssraw = lambda wildcards, input: input.gripss.replace('filtered.','')
     log:
         out = join(config['pipelinedir'], "logs", "somatic_ss__purple", "{sample}.o"),
@@ -407,7 +406,7 @@ rule somatic_ss__purple:
     container:
         config['container']['purple']
     shell:
-        "cd {params.dir}"
+        "cd {params.dir}\n"
         "java -Xmx24G "
         "    -jar /usr/local/share/hmftools-purple-4.0.2-0/purple.jar "
         "    -tumor M00001_TOD_BM "
