@@ -4,7 +4,7 @@ rule somatic_ss__mutect2_split:
     input:
         cram = join(config['workdir'], "01.cram", "{sample}", "{sample}.cram"),
     output:
-        vcf = temp(join(config['workdir'], "41.somatic_ss_snvindel_mutect2", "{sample}", "chroms", "{sample}.{chr}.mutect2.vcf")),
+        vcf = temp(join(config['workdir'], "41.somatic_ss_snvindel_mutect2", "{sample}", "chroms", "{sample}.{chr}.mutect2.flt.vcf")),
     params:
         dir = join(config['workdir'], "41.somatic_ss_sv__gridss", "{sample}"),
         vcf = join(config['workdir'], "41.somatic_ss_snvindel_mutect2", "{sample}", "chroms", "{sample}.{chr}.mutect2.vcf"),
@@ -30,12 +30,10 @@ rule somatic_ss__mutect2_split:
         "    -germline-resource {config[references][gatksomatic]}/af-only-gnomad.hg38.vcf.gz "
         "    --f1r2-tar-gz {params.f1r2} "
         "    > {log.out} 2> {log.err}\n"
-        "echo 1 >> {log.out}\n"
         "gatk --java-options \"-Xmx24g -Xms24g -Djava.io.tmpdir=/lscratch/$SLURM_JOB_ID\" LearnReadOrientationModel "
         "    -O {params.rom} "
         "    -I {params.f1r2}"
         "    >> {log.out} 2>> {log.err}\n"
-        "echo 2 >> {log.out}\n"
         "gatk --java-options \"-Xmx24g -Xms24g -Djava.io.tmpdir=/lscratch/$SLURM_JOB_ID\" GetPileupSummaries "
         "    -R {config[references][gatkbundle]}/Homo_sapiens_assembly38.fasta "
         "    -I {input.cram} "
@@ -43,13 +41,11 @@ rule somatic_ss__mutect2_split:
         "    -L {wildcards.chr} "
         "    -O {params.pst} "
         "    >> {log.out} 2>> {log.err}\n"
-        "echo 3 >> {log.out}\n"
         "gatk --java-options \"-Xmx24g -Xms24g -Djava.io.tmpdir=/lscratch/$SLURM_JOB_ID\" CalculateContamination "
         "    -I {params.pst} "
         "    -tumor-segmentation {params.st}  "
         "    -O {params.ct} "
         "    >> {log.out} 2>> {log.err}\n"
-        "echo 4 >> {log.out}\n"
         "gatk --java-options \"-Xmx24g -Xms24g -Djava.io.tmpdir=/lscratch/$SLURM_JOB_ID\" FilterMutectCalls "
         "    --reference {config[references][gatkbundle]}/Homo_sapiens_assembly38.fasta "
         "    -V {params.vcf} "
@@ -57,17 +53,17 @@ rule somatic_ss__mutect2_split:
         "    --ob-priors {params.rom} "
         "    -O {output.vcf} "
         "    >> {log.out} 2>> {log.err}\n"
-        "echo 5 >> {log.out}\n"
 
 rule somatic_ss__mutect2_merge:
     input:
         tbis =lambda wildcards: \
-             ["{}/41.somatic_ss_snvindel_mutect2/{}/chroms/{}.{}.mutect2.vcf.gz.tbi".format(config['workdir'], wildcards.sample, wildcards.sample, chrid) for chrid in ['chr%d'%(i) for i in range(1,23)]+['chrX','chrY']],
+             ["{}/41.somatic_ss_snvindel_mutect2/{}/chroms/{}.{}.mutect2.flt.vcf.gz.tbi".format(config['workdir'], wildcards.sample, wildcards.sample, chrid) for chrid in ['chr%d'%(i) for i in range(1,23)]+['chrX','chrY']],
     output:
         vcf  = join(config['workdir'], "41.somatic_ss_snvindel_mutect2", "{sample}", "{sample}.mutect2.vcf.gz"),
         vcfp = join(config['workdir'], "41.somatic_ss_snvindel_mutect2", "{sample}", "{sample}.mutect2.pass.vcf.gz"),
     params:
         dir  = join(config['workdir'], "41.somatic_ss_snvindel_mutect2", "{sample}"),
+        vcf0  = join(config['workdir'], "41.somatic_ss_snvindel_mutect2", "{sample}", "{sample}.mutect2.tmp.vcf.gz"),
         inputvcfs=lambda wildcards, input: " ".join(" {} ".format(in_.replace('.tbi','')) for in_ in input.tbis),
     log:
         out = join(config['pipelinedir'], "logs", "somatic_ss__mutect2_merge", "{sample}.o"),
@@ -80,9 +76,16 @@ rule somatic_ss__mutect2_merge:
         "bcftools concat "
         "    -a "
         "    -O z "
-        "    -o {output.vcf} "
+        "    -o {params.vcf0} "
         "    {params.inputvcfs} "
         "    > {log.out} 2> {log.err}\n"
+        "echo {wildcards.sample} > samplename.txt\n"
+        "bcftools reheader "
+        "    -s samplename.txt "
+        "    -o {output.vcf} "
+        "    {params.vcf0} "
+        "    >> {log.out} 2>> {log.err}\n"
+        "rm {params.vcf0} samplename.txt\n"
         "bcftools view "
         "    -f 'PASS' "
         "    {output.vcf}"
@@ -93,8 +96,8 @@ rule somatic_ss__mutect2_merge:
         "    >> {log.out} 2>> {log.err}\n"
         "tabix -p vcf {output.vcf} "
         "    >> {log.out} 2>> {log.err}\n"
-        "rm -rf {params.dir}/chroms"
-        "    >> {log.out} 2>> {log.err}\n"
+        # "rm -rf {params.dir}/chroms"
+        # "    >> {log.out} 2>> {log.err}\n"
 
 
 rule somatic_ss__octopus_split:
@@ -137,6 +140,7 @@ rule somatic_ss__octopus_merge:
         vcfp = join(config['workdir'], "42.somatic_ss_snvindel_octopus", "{sample}", "{sample}.octopus.pass.vcf.gz"),
     params:
         dir  = join(config['workdir'], "42.somatic_ss_snvindel_octopus", "{sample}"),
+        vcf0 = join(config['workdir'], "42.somatic_ss_snvindel_octopus", "{sample}", "{sample}.octopus.tmp.vcf.gz"),
         inputvcfs=lambda wildcards, input: " ".join(" {} ".format(in_.replace('.tbi','')) for in_ in input.tbis),
     log:
         out = join(config['pipelinedir'], "logs", "somatic_ss__octopus_merge", "{sample}.o"),
@@ -149,9 +153,16 @@ rule somatic_ss__octopus_merge:
         "bcftools concat "
         "    -a "
         "    -O z "
-        "    -o {output.vcf} "
+        "    -o {params.vcf} "
         "    {params.inputvcfs} "
         "    > {log.out} 2> {log.err}\n"
+        "echo {wildcards.sample} > samplename.txt\n"
+        "bcftools reheader "
+        "    -s samplename.txt "
+        "    -o {output.vcf} "
+        "    {params.vcf0} "
+        "    >> {log.out} 2>> {log.err}\n"
+        "rm {params.vcf0} samplename.txt\n"
         "bcftools view "
         "    -f 'PASS' "
         "    {output.vcf}"
@@ -410,19 +421,19 @@ rule somatic_ss__purple:
         "cd {params.dir}\n"
         "java -Xmx24G "
         "    -jar /usr/local/share/hmftools-purple-4.0.2-0/purple.jar "
-        "    -tumor M00001_TOD_BM "
+        "    -tumor {wildcards.sample} "
         "    -amber $(dirname $(realpath {input.amber})) "
         "    -cobalt $(dirname $(realpath {input.cobalt})) "
         "    -gc_profile {config[references][hmftools]}/ref/38/copy_number/GC_profile.1000bp.38.cnp "
         "    -ref_genome {config[references][gatkbundle]}/Homo_sapiens_assembly38.fasta "
         "    -ref_genome_version 38 "
         "    -ensembl_data_dir {config[references][hmftools]}/ref/38/common/ensembl_data "
+        "    -somatic_hotspots {config[references][hmftools]}/ref/38/variants/KnownHotspots.somatic.38.vcf.gz "
         "    -somatic_vcf {input.mutect} "
-        "    -structural_vcf {input.gripss} "
+        "    -somatic_sv_vcf {input.gripss} "
         "    -sv_recovery_vcf {params.gripssraw} "
-        "    -run_drivers "
         "    -driver_gene_panel {config[references][hmftools]}/ref/38/common/DriverGenePanel.38.tsv "
-        "    -output_dir {output.vcf}"
+        "    -output_dir {params.dir}"
         "  > {log.out} 2> {log.err}\n"
 
 rule somatic_ss__canvas:
@@ -460,7 +471,6 @@ rule somatic_ss__canvas:
         "    -r ref/canvas/kmer.fa"
         "    -g ref/canvas/WholeGenomeFasta"
         "    -f ref/canvas/filter13.bed"
-        "    --sample-b-allele-vcf={input.vcfp}"
         "    --sample-b-allele-vcf={input.vcf}"
         "    --ploidy-vcf=ref/ploidy.vcf"
         "    >> {log.out} 2>> {log.err}\n"
