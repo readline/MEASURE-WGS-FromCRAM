@@ -22,3 +22,7 @@ simg:
     vardict: https://depot.galaxyproject.org/singularity/vardict-java%3A1.8.3--hdfd78af_0
     delly: https://depot.galaxyproject.org/singularity/delly%3A1.2.6--hdcf5f25_3
     bcftools: https://depot.galaxyproject.org/singularity/bcftools%3A1.9--ha228f0b_4
+    cnvkit: https://depot.galaxyproject.org/singularity/cnvkit%3A0.9.9--pyhdfd78af_0
+    amber: https://depot.galaxyproject.org/singularity/hmftools-amber%3A4.0.1--hdfd78af_0
+    cobalt: https://depot.galaxyproject.org/singularity/hmftools-cobalt%3A1.16--hdfd78af_0
+    purple: https://depot.galaxyproject.org/singularity/hmftools-purple%3A4.0.2--hdfd78af_0

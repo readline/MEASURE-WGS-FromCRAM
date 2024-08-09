@@ -185,7 +185,7 @@ rule somatic_ss__vardict_split:
         "grep ^chr {config[references][gatkbundle]}/scattered_calling_intervals/{wildcards.itv}/scattered.interval_list|"
         "    cut -f1-3 > {wildcards.itv}.bed"
         "    2> {log.err}\n"
-        "export JAVA_OPTS='\"-Xms60g\" \"-Xmx60g\"'"
+        "export JAVA_OPTS='\"-Xms90g\" \"-Xmx90g\"'"
         "    > {log.out} 2>> {log.err}\n"
         "vardict-java "
         "    -G {config[references][gatkbundle]}/Homo_sapiens_assembly38.fasta "
@@ -301,4 +301,169 @@ rule somatic_ss__dellysv:
         "tabix {output.vcfgz}"
         "  > {log.out} 2>> {log.err}\n"
 
+rule somatic_ss__cnvkit:
+    input:
+        bam = join(config['workdir'], "02.bam", "{sample}", "{sample}.bam"),
+        mosdepth = join(config['workdir'], "01.cram", "{sample}", "QC", "Mosdepth", "{sample}.mosdepth.summary.txt"),
+    output:
+        cns = join(config['workdir'], "46.somatic_ss_cnv__cnvkit", "{sample}", "{sample}.call.cns"),
+        ok = join(config['workdir'], "46.somatic_ss_cnv__cnvkit", "{sample}", "cnvkit.ok"),
+    params:
+        dir = join(config['workdir'], "46.somatic_ss_cnv__cnvkit", "{sample}"),
+    log:
+        out = join(config['pipelinedir'], "logs", "somatic_ss__cnvkit", "{sample}.o"),
+        err = join(config['pipelinedir'], "logs", "somatic_ss__cnvkit", "{sample}.e"),
+    threads:
+        int(allocated("threads", "somatic_ss__cnvkit", cluster))
+    container:
+        config['container']['cnvkit']
+    shell:
+        "cd {params.dir} \n"
+        "genderinfo=$(python {config[pipelinedir]}/scripts/getgender.py {input.mosdepth}) \n"
+        "cnvkit.py "
+        "   batch {input.bam} "
+        "   -m wgs "
+        "   -r {config[references][pon]}/CNVkit.pon.cnn "
+        "   --output-dir {params.dir} "
+        "   --scatter "
+        "   -p {threads} "
+        "   $genderinfo "
+        "  > {log.out} 2> {log.err}\n"
+        "touch {output.ok}"
+
+rule somatic_ss__amber:
+    input:
+        cram = join(config['workdir'], "01.cram", "{sample}", "{sample}.cram"),
+    output:
+        ok = join(config['workdir'], "47.somatic_ss_cnv__purple", "{sample}", "amber", "amber.ok"),
+    params:
+        dir = join(config['workdir'], "47.somatic_ss_cnv__purple", "{sample}", "amber"),
+    log:
+        out = join(config['pipelinedir'], "logs", "somatic_ss__amber", "{sample}.o"),
+        err = join(config['pipelinedir'], "logs", "somatic_ss__amber", "{sample}.e"),
+    threads:
+        int(allocated("threads", "somatic_ss__amber", cluster))
+    container:
+        config['container']['amber']
+    shell:
+        "cd {params.dir} \n"
+        "java -Xmx24G "
+        "    -jar /usr/local/share/hmftools-amber-4.0.1-0/amber.jar "
+        "    -tumor {wildcards.sample} "
+        "    -tumor_bam {input.cram} "
+        "    -output_dir {params.dir} "
+        "    -threads {threads} "
+        "    -loci {config[references][hmftools]}/ref/38/copy_number/AmberGermlineSites.38.tsv.gz "
+        "    -ref_genome {config[references][gatkbundle]}/Homo_sapiens_assembly38.fasta "
+        "    -ref_genome_version 38"
+        "  > {log.out} 2> {log.err}\n"
+        "touch {output.ok}"
+
+rule somatic_ss__cobalt:
+    input:
+        cram = join(config['workdir'], "01.cram", "{sample}", "{sample}.cram"),
+    output:
+        ok = join(config['workdir'], "47.somatic_ss_cnv__purple", "{sample}", "cobalt", "cobalt.ok"),
+    params:
+        dir = join(config['workdir'], "47.somatic_ss_cnv__purple", "{sample}", "cobalt"),
+    log:
+        out = join(config['pipelinedir'], "logs", "somatic_ss__cobalt", "{sample}.o"),
+        err = join(config['pipelinedir'], "logs", "somatic_ss__cobalt", "{sample}.e"),
+    threads:
+        int(allocated("threads", "somatic_ss__cobalt", cluster))
+    container:
+        config['container']['cobalt']
+    shell:
+        "cd {params.dir} \n"
+        "java -Xmx12G "
+        "    -jar /usr/local/share/hmftools-cobalt-1.16-0/cobalt.jar "
+        "    -tumor {wildcards.sample} "
+        "    -tumor_bam {input.cram} "
+        "    -output_dir {params.dir} "
+        "    -threads {threads} "
+        "    -ref_genome {config[references][gatkbundle]}/Homo_sapiens_assembly38.fasta "
+        "    -tumor_only_diploid_bed {config[references][hmftools]}/ref/38/copy_number/DiploidRegions.38.bed.gz "
+        "    -gc_profile {config[references][hmftools]}/ref/38/copy_number/GC_profile.1000bp.38.cnp"
+        "  > {log.out} 2> {log.err}\n"
+        "touch {output.ok}"
+
+rule somatic_ss__purple:
+    input:
+        cram = join(config['workdir'], "01.cram", "{sample}", "{sample}.cram"),
+        amber = join(config['workdir'], "47.somatic_ss_cnv__purple", "{sample}", "amber", "amber.ok"),
+        cobalt = join(config['workdir'], "47.somatic_ss_cnv__purple", "{sample}", "cobalt", "cobalt.ok"),
+        mutect = join(config['workdir'], "41.somatic_ss_snvindel_mutect2", "{sample}", "{sample}.mutect2.pass.vcf.gz"),
+        gripss = join(config['workdir'], "44.somatic_ss_sv__gridss", "{sample}", "{sample}.gripss.filtered.vcf.gz"),
+    output:
+        vcf = join(config['workdir'], "47.somatic_ss_cnv__purple", "{sample}", "M00001_TOD_BM.purple.sv.vcf.gz"),
+    params:
+        dir = join(config['workdir'], "47.somatic_ss_cnv__purple", "{sample}"),
+        gripssraw = lambda wildcards, input: input.gripss.replace('filtered.','')
+    log:
+        out = join(config['pipelinedir'], "logs", "somatic_ss__purple", "{sample}.o"),
+        err = join(config['pipelinedir'], "logs", "somatic_ss__purple", "{sample}.e"),
+    threads:
+        int(allocated("threads", "somatic_ss__purple", cluster))
+    container:
+        config['container']['purple']
+    shell:
+        "cd {params.dir}\n"
+        "java -Xmx24G "
+        "    -jar /usr/local/share/hmftools-purple-4.0.2-0/purple.jar "
+        "    -tumor M00001_TOD_BM "
+        "    -amber $(dirname $(realpath {input.amber})) "
+        "    -cobalt $(dirname $(realpath {input.cobalt})) "
+        "    -gc_profile {config[references][hmftools]}/ref/38/copy_number/GC_profile.1000bp.38.cnp "
+        "    -ref_genome {config[references][gatkbundle]}/Homo_sapiens_assembly38.fasta "
+        "    -ref_genome_version 38 "
+        "    -ensembl_data_dir {config[references][hmftools]}/ref/38/common/ensembl_data "
+        "    -somatic_vcf {input.mutect} "
+        "    -structural_vcf {input.gripss} "
+        "    -sv_recovery_vcf {params.gripssraw} "
+        "    -run_drivers "
+        "    -driver_gene_panel {config[references][hmftools]}/ref/38/common/DriverGenePanel.38.tsv "
+        "    -output_dir {output.vcf}"
+        "  > {log.out} 2> {log.err}\n"
+
+rule somatic_ss__canvas:
+    input:
+        selfsc = join(config['workdir'], "05.peddy", "{sample}", "{sample}.sex_check.csv"),
+        bam = join(config['workdir'], "02.bam", "{sample}", "{sample}.bam"),
+        vcfp = join(config['workdir'], "41.somatic_ss_snvindel_mutect2", "{sample}", "{sample}.mutect2.pass.vcf.gz"),
+        vcf  = join( config['workdir'], "11.germline_snv_deepvariant", "{sample}", "{sample}.deepvariant.vcf.gz" ),
+    output:
+        vcf = join(config['workdir'], "48.somatic_ss_cnv__canvas", "{sample}", "CNV.vcf.gz"),
+    params:
+        dir = join(config['workdir'], "48.somatic_ss_cnv__canvas", "{sample}"),
+    log:
+        out = join(config['pipelinedir'], "logs", "somatic_ss__canvas", "{sample}.o"),
+        err = join(config['pipelinedir'], "logs", "somatic_ss__canvas", "{sample}.e"),
+    threads:
+        int(allocated("threads", "somatic_ss__canvas", cluster))
+    container:
+        config['container']['canvas']
+    shell: 
+        "cd {params.dir} \n"
+        "rm -rf * \n"
+        "mkdir ref \n"
+        "cd ref \n"
+        "ln -s {config[references][canvas]} canvas\n"
+        "ln -s {config[references][canvas]}/Sequence Sequence\n"
+        "cd {params.dir}\n"
+        "python3 {config[pipelinedir]}/scripts/peddy2ploidy.py {input.selfsc} ref/ploidy.vcf"
+        "  > {log.out} 2> {log.err}\n"
+        "Canvas.sh"
+        "    Somatic-WGS"
+        "    -b {input.bam}"
+        "    -n {wildcards.sample} "
+        "    -o {params.dir}"
+        "    -r ref/canvas/kmer.fa"
+        "    -g ref/canvas/WholeGenomeFasta"
+        "    -f ref/canvas/filter13.bed"
+        "    --sample-b-allele-vcf={input.vcfp}"
+        "    --sample-b-allele-vcf={input.vcf}"
+        "    --ploidy-vcf=ref/ploidy.vcf"
+        "    >> {log.out} 2>> {log.err}\n"
+        "rm -rf ref TempCNV"
+        "    >> {log.out} 2>> {log.err}\n"
 

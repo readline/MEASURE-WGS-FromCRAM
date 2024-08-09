@@ -290,3 +290,38 @@ somatic_ss__vardict_merge:
     mem: '32g'
     time: '2-00:00:00'
     extra: ' --gres=lscratch:50'
+
+somatic_ss__cnvkit:
+    partition: 'norm'
+    threads: 16
+    mem: '64g'
+    time: '2-00:00:00'
+    extra: ' --gres=lscratch:50'
+
+somatic_ss__amber:
+    partition: 'norm'
+    threads: 10
+    mem: '32g'
+    time: '2-00:00:00'
+    extra: ' --gres=lscratch:50'
+
+somatic_ss__cobalt:
+    partition: 'norm'
+    threads: 24
+    mem: '48g'
+    time: '2-00:00:00'
+    extra: ' --gres=lscratch:50'
+
+somatic_ss__purple:
+    partition: 'norm'
+    threads: 24
+    mem: '48g'
+    time: '2-00:00:00'
+    extra: ' --gres=lscratch:50'
+
+somatic_ss__canvas:
+    partition: 'norm'
+    threads: 24
+    mem: '64g'
+    time: '2-00:00:00'
+    extra: ' --gres=lscratch:50'
