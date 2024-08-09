@@ -406,7 +406,7 @@ rule somatic_ss__purple:
         mutect = join(config['workdir'], "41.somatic_ss_snvindel_mutect2", "{sample}", "{sample}.mutect2.pass.vcf.gz"),
         gripss = join(config['workdir'], "44.somatic_ss_sv__gridss", "{sample}", "{sample}.gripss.filtered.vcf.gz"),
     output:
-        vcf = join(config['workdir'], "47.somatic_ss_cnv__purple", "{sample}", "M00001_TOD_BM.purple.sv.vcf.gz"),
+        cnv = join(config['workdir'], "47.somatic_ss_cnv__purple", "{sample}", "{sample}.purple.cnv.somatic.tsv"),
     params:
         dir = join(config['workdir'], "47.somatic_ss_cnv__purple", "{sample}"),
         gripssraw = lambda wildcards, input: input.gripss.replace('filtered.','')
@@ -474,6 +474,6 @@ rule somatic_ss__canvas:
         "    --sample-b-allele-vcf={input.vcf}"
         "    --ploidy-vcf=ref/ploidy.vcf"
         "    >> {log.out} 2>> {log.err}\n"
-        "rm -rf ref TempCNV"
+        "rm -rf ref TempCNV*"
         "    >> {log.out} 2>> {log.err}\n"
 
