@@ -423,3 +423,46 @@ rule somatic_ss__purple:
         "    -driver_gene_panel {config[references][hmftools]}/ref/38/common/DriverGenePanel.38.tsv "
         "    -output_dir {output.vcf}"
         "  > {log.out} 2> {log.err}\n"
+
+rule somatic_ss__canvas:
+    input:
+        selfsc = join(config['workdir'], "05.peddy", "{sample}", "{sample}.sex_check.csv"),
+        bam = join(config['workdir'], "02.bam", "{sample}", "{sample}.bam"),
+        vcfp = join(config['workdir'], "41.somatic_ss_snvindel_mutect2", "{sample}", "{sample}.mutect2.pass.vcf.gz"),
+        vcf  = join( config['workdir'], "11.germline_snv_deepvariant", "{sample}", "{sample}.deepvariant.vcf.gz" ),
+    output:
+        vcf = join(config['workdir'], "48.somatic_ss_cnv__canvas", "{sample}", "CNV.vcf.gz"),
+    params:
+        dir = join(config['workdir'], "48.somatic_ss_cnv__canvas", "{sample}"),
+    log:
+        out = join(config['pipelinedir'], "logs", "somatic_ss__canvas", "{sample}.o"),
+        err = join(config['pipelinedir'], "logs", "somatic_ss__canvas", "{sample}.e"),
+    threads:
+        int(allocated("threads", "somatic_ss__canvas", cluster))
+    container:
+        config['container']['canvas']
+    shell: 
+        "cd {params.dir} \n"
+        "rm -rf * \n"
+        "mkdir ref \n"
+        "cd ref \n"
+        "ln -s {config[references][canvas]} canvas\n"
+        "ln -s {config[references][canvas]}/Sequence Sequence\n"
+        "cd {params.dir}\n"
+        "python3 {config[pipelinedir]}/scripts/peddy2ploidy.py {input.selfsc} ref/ploidy.vcf"
+        "  > {log.out} 2> {log.err}\n"
+        "Canvas.sh"
+        "    Somatic-WGS"
+        "    -b {input.bam}"
+        "    -n {wildcards.sample} "
+        "    -o {params.dir}"
+        "    -r ref/canvas/kmer.fa"
+        "    -g ref/canvas/WholeGenomeFasta"
+        "    -f ref/canvas/filter13.bed"
+        "    --sample-b-allele-vcf={input.vcfp}"
+        "    --sample-b-allele-vcf={input.vcf}"
+        "    --ploidy-vcf=ref/ploidy.vcf"
+        "    >> {log.out} 2>> {log.err}\n"
+        "rm -rf ref TempCNV"
+        "    >> {log.out} 2>> {log.err}\n"
+
