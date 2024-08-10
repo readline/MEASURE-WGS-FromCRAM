@@ -186,7 +186,7 @@ rule somatic_tn__muse:
     threads:
         int(allocated("threads", "somatic_tn__muse", cluster))
     container:
-        config['container']['manta']
+        config['container']['muse']
     shell:
         "MuSE call "
         "    -f {config[references][gatkbundle]}/Homo_sapiens_assembly38.fasta "
