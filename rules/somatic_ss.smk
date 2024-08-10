@@ -6,7 +6,6 @@ rule somatic_ss__mutect2_split:
     output:
         vcf = temp(join(config['workdir'], "41.somatic_ss_snvindel_mutect2", "{sample}", "chroms", "{sample}.{chr}.mutect2.flt.vcf")),
     params:
-        dir = join(config['workdir'], "41.somatic_ss_sv__gridss", "{sample}"),
         vcf = join(config['workdir'], "41.somatic_ss_snvindel_mutect2", "{sample}", "chroms", "{sample}.{chr}.mutect2.vcf"),
         f1r2 = join(config['workdir'], "41.somatic_ss_snvindel_mutect2", "{sample}", "chroms", "{sample}.{chr}.f1r2.tar.gz"),
         rom = join(config['workdir'], "41.somatic_ss_snvindel_mutect2", "{sample}", "chroms", "{sample}.{chr}.read-orientation-model.tar.gz"),
@@ -305,8 +304,7 @@ rule somatic_ss__dellysv:
         "delly call "
         "    -g {config[references][gatkbundle]}/Homo_sapiens_assembly38.fasta "
         "    -x {config[references][delly]}/human.hg38.excl.tsv "
-        "    {input.cram}"
-        "    > {params.vcf} |"
+        "    {input.cram} |"
         "bgzip > {output.vcfgz}"
         "    2> {log.err}\n"
         "tabix {output.vcfgz}"
