@@ -22,7 +22,8 @@ rule somatic_tn__mutect2_split:
     container:
         config['container']['gatk']
     shell:
-        "normal=$(samtools view -H {input.cram0} | grep '^@RG'|  awk '/^@RG/ {for (i=1; i<=NF; i++) if ($i ~ /^SM:/) print substr($i,4)}'|head -1)"
+        "normal=$(samtools view -H {input.cram0} | grep '^@RG'|  awk '/^@RG/ {{for (i=1; i<=NF; i++) if ($i ~ /^SM:/) print substr($i,4)}}'|head -1) 2> {log.err}\n"
+        "echo Tumor: {wildcards.sample}.  Normal: {params.normal}, RG:$normal, 2>> {log.err}\n"
         "gatk --java-options \"-Xmx24g -Xms24g -Djava.io.tmpdir=/lscratch/$SLURM_JOB_ID\" Mutect2 "
         "    -R {config[references][gatkbundle]}/Homo_sapiens_assembly38.fasta "
         "    -I {input.cram} "
@@ -33,7 +34,7 @@ rule somatic_tn__mutect2_split:
         "    -O {params.vcf} "
         "    -germline-resource {config[references][gatksomatic]}/af-only-gnomad.hg38.vcf.gz "
         "    --f1r2-tar-gz {params.f1r2} "
-        "    > {log.out} 2> {log.err}\n"
+        "    > {log.out} 2>> {log.err}\n"
         "gatk --java-options \"-Xmx24g -Xms24g -Djava.io.tmpdir=/lscratch/$SLURM_JOB_ID\" LearnReadOrientationModel "
         "    -O {params.rom} "
         "    -I {params.f1r2}"
