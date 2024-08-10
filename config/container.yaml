@@ -26,3 +26,4 @@ simg:
     amber: https://depot.galaxyproject.org/singularity/hmftools-amber%3A4.0.1--hdfd78af_0
     cobalt: https://depot.galaxyproject.org/singularity/hmftools-cobalt%3A1.16--hdfd78af_0
     purple: https://depot.galaxyproject.org/singularity/hmftools-purple%3A4.0.2--hdfd78af_0
+    muse: https://depot.galaxyproject.org/singularity/muse%3A1.0.rc--h43eeafb_8

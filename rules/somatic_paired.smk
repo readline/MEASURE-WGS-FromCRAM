@@ -172,6 +172,36 @@ rule somatic_tn__manta:
         "rm -rf workspace"
         "  >> {log.out} 2>> {log.err}\n"
 
+rule somatic_tn__muse:
+    input:
+        cram = join(config['workdir'], "01.cram", "{sample}", "{sample}.cram"),
+        cram0 = lambda wildcards: "{}/01.cram/{}/{}.cram".format(config['workdir'], dic_tumor_to_normal[wildcards.sample], dic_tumor_to_normal[wildcards.sample]),
+    output:
+        vgz = join(config['workdir'], "33.somatic_snv_muse", "{sample}", "{sample}.MuSE.vcf"),
+    params:
+        prefix = join(config['workdir'], "33.somatic_snv_muse", "{sample}", "{sample}"),
+    log:
+        out = join(config['pipelinedir'], "logs", "somatic_tn__muse", "{sample}.o"),
+        err = join(config['pipelinedir'], "logs", "somatic_tn__muse", "{sample}.e"),
+    threads:
+        int(allocated("threads", "somatic_tn__muse", cluster))
+    container:
+        config['container']['manta']
+    shell:
+        "MuSE call "
+        "    -f {config[references][gatkbundle]}/Homo_sapiens_assembly38.fasta "
+        "    -n {threads} "
+        "    -O {params.prefix} "
+        "    {input.cram} "
+        "    {input.cram0} "
+        " > {log.out} 2> {log.err}\n"
+        "MuSE sump "
+        "    -I {params.prefix}.MuSE.txt "
+        "    -G "
+        "    -D {config[references][gatkbundlesup]}/dbsnp_138.hg38.vcf.gz "
+        "    -O {params.prefix}.MuSE.vcf"
+        " >> {log.out} 2>> {log.err}"
+
 rule somatic_tn__gridss_assemble_shards:
     input:
         cram1 = join(config['workdir'], "01.cram", "{sample}", "{sample}.cram"),
