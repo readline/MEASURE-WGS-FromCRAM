@@ -107,6 +107,71 @@ rule somatic_tn__mutect2_merge:
         # "rm -rf {params.dir}/chroms"
         # "    >> {log.out} 2>> {log.err}\n"
 
+rule somatic_tn__strelka:
+    input:
+        cram = join(config['workdir'], "01.cram", "{sample}", "{sample}.cram"),
+        cram0 = lambda wildcards: "{}/01.cram/{}/{}.cram".format(config['workdir'], dic_tumor_to_normal[wildcards.sample], dic_tumor_to_normal[wildcards.sample]),
+        manta = join(config['workdir'], "34.somatic_sv_manta", "{sample}", "results", "variants", "candidateSmallIndels.vcf.gz"),
+    output:
+        vgz = join(config['workdir'], "32.somatic_snv_strelka", "{sample}", "results", "variants", "variants.vcf.gz"),
+    params:
+        dir = join(config['workdir'], "32.somatic_snv_strelka", "{sample}"),
+    log:
+        out = join(config['pipelinedir'], "logs", "somatic_tn__strelka", "{sample}.o"),
+        err = join(config['pipelinedir'], "logs", "somatic_tn__strelka", "{sample}.e"),
+    threads:
+        int(allocated("threads", "somatic_tn__strelka", cluster))
+    container:
+        config['container']['strelka']
+    shell:
+        "configureStrelkaSomaticWorkflow.py"
+        "  --normalBam {input.cram0}"
+        "  --tumorBam {input.cram}"
+        "  --referenceFasta {config[references][gatkbundle]}/Homo_sapiens_assembly38.fasta"
+        "  --indelCandidates {input.manta}"
+        "  --runDir {params.dir}"
+        "  --outputCallableRegions"
+        "  > {log.out} 2> {log.err}\n"
+        "cd {params.dir} \n"
+        "./runWorkflow.py"
+        "  -m local"
+        "  -j {threads}"
+        "  >> {log.out} 2>> {log.err}\n"
+        "rm -rf workspace"
+        "  >> {log.out} 2>> {log.err}\n"
+
+
+rule somatic_tn__manta:
+    input:
+        cram = join(config['workdir'], "01.cram", "{sample}", "{sample}.cram"),
+        cram0 = lambda wildcards: "{}/01.cram/{}/{}.cram".format(config['workdir'], dic_tumor_to_normal[wildcards.sample], dic_tumor_to_normal[wildcards.sample]),
+    output:
+        vgz = join(config['workdir'], "34.somatic_sv_manta", "{sample}", "results", "variants", "candidateSV.vcf.gz"),
+        indel = join(config['workdir'], "34.somatic_sv_manta", "{sample}", "results", "variants", "candidateSmallIndels.vcf.gz"),
+    params:
+        dir = join(config['workdir'], "34.somatic_sv_manta", "{sample}"),
+    log:
+        out = join(config['pipelinedir'], "logs", "somatic_tn__manta", "{sample}.o"),
+        err = join(config['pipelinedir'], "logs", "somatic_tn__manta", "{sample}.e"),
+    threads:
+        int(allocated("threads", "somatic_tn__manta", cluster))
+    container:
+        config['container']['manta']
+    shell:
+        "configManta.py"
+        "  --normalBam {input.cram0}"
+        "  --tumorBam {input.cram}"
+        "  --reference {config[references][gatkbundle]}/Homo_sapiens_assembly38.fasta"
+        "  --runDir {params.dir}"
+        "  > {log.out} 2> {log.err}\n"
+        "cd {params.dir} \n"
+        "./runWorkflow.py"
+        "  -m local"
+        "  -j {threads}"
+        "  >> {log.out} 2>> {log.err}\n"
+        "rm -rf workspace"
+        "  >> {log.out} 2>> {log.err}\n"
+
 rule somatic_tn__gridss_assemble_shards:
     input:
         cram1 = join(config['workdir'], "01.cram", "{sample}", "{sample}.cram"),
