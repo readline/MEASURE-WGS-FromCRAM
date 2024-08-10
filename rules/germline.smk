@@ -388,6 +388,7 @@ rule germline__peddy:
 rule germline__strelka:
     input:
         cram = join(config['workdir'], "01.cram", "{sample}", "{sample}.cram"),
+        manta = join(config['workdir'], "13.germline_sv_manta", "{sample}", "results", "variants", "candidateSmallIndels.vcf.gz"),
     output:
         vgz = join(config['workdir'], "12.germline_snv_strelka", "{sample}", "results", "variants", "variants.vcf.gz"),
     params:
@@ -403,6 +404,7 @@ rule germline__strelka:
         "configureStrelkaGermlineWorkflow.py"
         "  --bam {input.cram}"
         "  --referenceFasta {config[references][gatkbundle]}/Homo_sapiens_assembly38.fasta"
+        "  --indelCandidates {input.manta}"
         "  --runDir {params.dir}"
         "  > {log.out} 2> {log.err}\n"
         "cd {params.dir} \n"
@@ -419,6 +421,7 @@ rule germline__manta:
         cram = join(config['workdir'], "01.cram", "{sample}", "{sample}.cram"),
     output:
         vgz = join(config['workdir'], "13.germline_sv_manta", "{sample}", "results", "variants", "candidateSV.vcf.gz"),
+        indel = join(config['workdir'], "13.germline_sv_manta", "{sample}", "results", "variants", "candidateSmallIndels.vcf.gz"),
     params:
         dir = join(config['workdir'], "13.germline_sv_manta", "{sample}"),
     log:
