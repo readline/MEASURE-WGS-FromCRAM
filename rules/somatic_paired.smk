@@ -174,8 +174,8 @@ rule somatic_tn__manta:
 
 rule somatic_tn__muse_split:
     input:
-        cram = join(config['workdir'], "01.cram", "{sample}", "{sample}.cram"),
-        cram0 = lambda wildcards: "{}/01.cram/{}/{}.cram".format(config['workdir'], dic_tumor_to_normal[wildcards.sample], dic_tumor_to_normal[wildcards.sample]), 
+        bam = join(config['workdir'], "02.bam", "{sample}", "{sample}.bam"),
+        bam0 = lambda wildcards: "{}/02.bam/{}/{}.bam".format(config['workdir'], dic_tumor_to_normal[wildcards.sample], dic_tumor_to_normal[wildcards.sample]), 
     output:
         vcf = join(config['workdir'], "33.somatic_snv_muse", "{sample}", "itvs", "{sample}.{itv}.MuSE.vcf"),
     params:
@@ -183,8 +183,8 @@ rule somatic_tn__muse_split:
         bed = join(config['workdir'], "33.somatic_snv_muse", "{sample}", "itvs", "{itv}.bed"),
         prefix = join(config['workdir'], "33.somatic_snv_muse", "{sample}", "itvs", "{sample}.{itv}"),
     log:
-        out = join(config['pipelinedir'], "logs", "somatic_tn__muse_split", "{sample}.o"),
-        err = join(config['pipelinedir'], "logs", "somatic_tn__muse_split", "{sample}.e"),
+        out = join(config['pipelinedir'], "logs", "somatic_tn__muse_split", "{sample}.{itv}.o"),
+        err = join(config['pipelinedir'], "logs", "somatic_tn__muse_split", "{sample}.{itv}.e"),
     threads:
         int(allocated("threads", "somatic_tn__muse_split", cluster))
     container:
@@ -192,13 +192,13 @@ rule somatic_tn__muse_split:
     shell:
         "cd {params.dir}\n"
         "grep ^chr {config[references][gatkbundle]}/scattered_calling_intervals/{wildcards.itv}/scattered.interval_list|"
-        "    cut -f1-3 > {params.bed}"
+        "    cut -f1-3 > {params.bed}\n"
         "MuSE call "
         "    -f {config[references][gatkbundle]}/Homo_sapiens_assembly38.fasta "
         "    -l {params.bed}"
         "    -O {params.prefix} "
-        "    {input.cram} "
-        "    {input.cram0} "
+        "    {input.bam} "
+        "    {input.bam0} "
         " > {log.out} 2> {log.err}\n"
         "MuSE sump "
         "    -I {params.prefix}.MuSE.txt "
@@ -211,13 +211,11 @@ rule somatic_tn__muse_merge:
     input:
         tbis =lambda wildcards: \
              ["{}/33.somatic_snv_muse/{}/itvs/{}.{}.MuSE.vcf.gz.tbi".format(config['workdir'], wildcards.sample, wildcards.sample, itv) for itv in ['temp_%.4d_of_%d'%(i,config['parameter']['gatkitv']) for i in range(1,config['parameter']['gatkitv']+1)]],
-    output:5050
+    output:
         vcf  = join(config['workdir'], "33.somatic_snv_muse", "{sample}", "{sample}.MuSE.vcf.gz"),
         vcfp  = join(config['workdir'], "33.somatic_snv_muse", "{sample}", "{sample}.MuSE.pass.vcf.gz"),
     params:
         dir = join(config['workdir'], "33.somatic_snv_muse", "{sample}"),
-        prefix = join(config['workdir'], "33.somatic_snv_muse", "{sample}"),
-        firsttxt=lambda wildcards, input: input.txts[0]
         inputvcfs=lambda wildcards, input: " ".join(" {} ".format(in_.replace('.tbi','')) for in_ in input.tbis),
     log:
         out = join(config['pipelinedir'], "logs", "somatic_tn__muse_merge", "{sample}.o"),
@@ -243,7 +241,7 @@ rule somatic_tn__muse_merge:
         "    >> {log.out} 2>> {log.err}\n"
         "tabix -p vcf {output.vcf} "
         "    >> {log.out} 2>> {log.err}\n"
-        "rm -rf {params.dir}/chroms"
+        "rm -rf {params.dir}/itvs"
         "    >> {log.out} 2>> {log.err}\n"
         
 
