@@ -355,9 +355,16 @@ somatic_tn__manta:
     time: '2-00:00:00'
     extra: ' --gres=lscratch:50'
 
-somatic_tn__muse:
+somatic_tn__muse_split:
     partition: 'norm'
-    threads: 36
-    mem: '64g'
+    threads: 8
+    mem: '32g'
+    time: '2-00:00:00'
+    extra: ' --gres=lscratch:50'
+
+somatic_tn__muse_merge:
+    partition: 'norm'
+    threads: 8
+    mem: '32g'
     time: '2-00:00:00'
     extra: ' --gres=lscratch:50'
