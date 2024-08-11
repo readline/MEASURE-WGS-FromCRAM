@@ -193,15 +193,17 @@ rule somatic_tn__muse:
         config['container']['muse']
     shell:
         "cd {params.dir}\n"
-        "ln -s {config[references][gatkbundle]}/Homo_sapiens_assembly38.dbsnp138.vcf.gz \n"
-        "tabix -p vcf Homo_sapiens_assembly38.dbsnp138.vcf.gz \n"
+        "ln -s {config[references][gatkbundle]}/Homo_sapiens_assembly38.dbsnp138.vcf.gz "
+        " > {log.out} 2> {log.err}\n"
+        "tabix -p vcf Homo_sapiens_assembly38.dbsnp138.vcf.gz "
+        " >> {log.out} 2>> {log.err}\n"
         "/MuSE/bin/MuSE call "
         "    -f {config[references][gatkbundle]}/Homo_sapiens_assembly38.fasta "
         "    -O {params.prefix} "
         "    -n {threads}"
         "    {input.bam} "
         "    {input.bam0} "
-        " > {log.out} 2> {log.err}\n"
+        " >> {log.out} 2>> {log.err}\n"
         "/MuSE/bin/MuSE sump "
         "    -I {params.prefix}.MuSE.txt "
         "    -n {threads}"
@@ -210,6 +212,7 @@ rule somatic_tn__muse:
         "    -O {params.prefix}.MuSE.vcf"
         " >> {log.out} 2>> {log.err} \n"
         "rm Homo_sapiens_assembly38.dbsnp138.vcf.gz"
+        " > {log.out} 2> {log.err}\n"
 
 rule somatic_tn__muse_post:
     input:
