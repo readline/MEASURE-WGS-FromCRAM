@@ -5,7 +5,7 @@ docker:
     deepvariant-gpu: docker://google/deepvariant:1.6.1-gpu
     canvas: docker://diracrnhlbi.azurecr.io/bio/canvas:1.40.0.1613
     octopus: docker://dancooke/octopus:0.7.4
-    muse: docker://jiyunmathbham/muse2:latest
+    muse: docker://funsinaime/muse:2.1
 singularity:
     melt: library://funsinaime/mei/melt:2.2.2
 simg:
