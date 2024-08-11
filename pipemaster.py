@@ -85,7 +85,7 @@ def main():
         os.system('mkdir -p %s'%(os.path.join(os.path.realpath(options.workdir), 'Pipe_runtime', snapshot, 'logs', 'slurm')))
     # Check and write samplesheet to the workdir
     try:
-        dic_patient_to_eventsamples, dic_sample_to_runs, dic_run, dic_sample_to_patient, dic_tumor_to_normal, tasks = \
+        dic_patient_to_eventsamples, dic_sample_to_runs, dic_run, dic_sample_to_patient, dic_sample_to_sid, dic_tumor_to_normal, tasks = \
             samplesheet(options.samplesheet)
     except:
         parser.error("Samplesheet failed to load. Check %s"%(options.samplesheet))

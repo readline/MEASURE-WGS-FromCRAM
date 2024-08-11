@@ -70,6 +70,8 @@ rule somatic_tn__mutect2_merge:
     params:
         dir  = join(config['workdir'], "31.somatic_tn_snvindel_mutect2", "{sample}"),
         normal = lambda wildcards: dic_tumor_to_normal[wildcards.sample],
+        sample_sid = lambda wildcards: dic_sample_to_sid[wildcards.sample],
+        normal_sid = lambda wildcards: dic_sample_to_sid[dic_tumor_to_normal[wildcards.sample]],
         vcf0  = join(config['workdir'], "31.somatic_tn_snvindel_mutect2", "{sample}", "{sample}.mutect2.tmp.vcf.gz"),
         inputvcfs=lambda wildcards, input: " ".join(" {} ".format(in_.replace('.tbi','')) for in_ in input.tbis),
     log:
@@ -86,8 +88,8 @@ rule somatic_tn__mutect2_merge:
         "    -o {params.vcf0} "
         "    {params.inputvcfs} "
         "    > {log.out} 2> {log.err}\n"
-        "echo {wildcards.sample} > samplename.txt\n"
-        "echo {params.normal} >> samplename.txt\n"
+        "echo {params.sample_sid} {wildcards.sample} > samplename.txt\n"
+        "echo {params.normal_sid} {params.normal} >> samplename.txt\n"
         "bcftools reheader "
         "    -s samplename.txt "
         "    -o {output.vcf} "
@@ -171,6 +173,84 @@ rule somatic_tn__manta:
         "  >> {log.out} 2>> {log.err}\n"
         "rm -rf workspace"
         "  >> {log.out} 2>> {log.err}\n"
+
+
+rule somatic_tn__muse:
+    input:
+        bam = join(config['workdir'], "02.bam", "{sample}", "{sample}.bam"),
+        bam0 = lambda wildcards: "{}/02.bam/{}/{}.bam".format(config['workdir'], dic_tumor_to_normal[wildcards.sample], dic_tumor_to_normal[wildcards.sample]), 
+    output:
+        vcf = join(config['workdir'], "33.somatic_snv_muse", "{sample}", "{sample}.MuSE.vcf"),
+    params:
+        dir = join(config['workdir'], "33.somatic_snv_muse", "{sample}"),
+        prefix = join(config['workdir'], "33.somatic_snv_muse", "{sample}", "{sample}"),
+    log:
+        out = join(config['pipelinedir'], "logs", "somatic_tn__muse", "{sample}.o"),
+        err = join(config['pipelinedir'], "logs", "somatic_tn__muse", "{sample}.e"),
+    threads:
+        int(allocated("threads", "somatic_tn__muse", cluster))
+    container:
+        config['container']['muse']
+    shell:
+        "cd {params.dir}\n"
+        "ln -s {config[references][gatkbundle]}/Homo_sapiens_assembly38.dbsnp138.vcf.gz "
+        " > {log.out} 2> {log.err}\n"
+        "tabix -p vcf Homo_sapiens_assembly38.dbsnp138.vcf.gz "
+        " >> {log.out} 2>> {log.err}\n"
+        "/MuSE/bin/MuSE call "
+        "    -f {config[references][gatkbundle]}/Homo_sapiens_assembly38.fasta "
+        "    -O {params.prefix} "
+        "    -n {threads}"
+        "    {input.bam} "
+        "    {input.bam0} "
+        " >> {log.out} 2>> {log.err}\n"
+        "/MuSE/bin/MuSE sump "
+        "    -I {params.prefix}.MuSE.txt "
+        "    -n {threads}"
+        "    -G "
+        "    -D Homo_sapiens_assembly38.dbsnp138.vcf.gz "
+        "    -O {params.prefix}.MuSE.vcf"
+        " >> {log.out} 2>> {log.err} \n"
+        "rm Homo_sapiens_assembly38.dbsnp138.vcf.gz"
+        " > {log.out} 2> {log.err}\n"
+
+rule somatic_tn__muse_post:
+    input:
+        vcf = join(config['workdir'], "33.somatic_snv_muse", "{sample}", "{sample}.MuSE.vcf.gz.tbi"),
+    output:
+        vcfp  = join(config['workdir'], "33.somatic_snv_muse", "{sample}", "{sample}.MuSE.pass.vcf.gz"),
+    params:
+        dir = join(config['workdir'], "33.somatic_snv_muse", "{sample}"),
+        vcf = join(config['workdir'], "33.somatic_snv_muse", "{sample}", "{sample}.MuSE.vcf.gz"),
+        vcf0  = join(config['workdir'], "33.somatic_snv_muse", "{sample}", "{sample}.MuSE.tmp.vcf.gz"),
+    log:
+        out = join(config['pipelinedir'], "logs", "somatic_tn__muse_post", "{sample}.o"),
+        err = join(config['pipelinedir'], "logs", "somatic_tn__muse_post", "{sample}.e"),
+    threads:
+        int(allocated("threads", "somatic_tn__muse_post", cluster))
+    container:
+        config['container']['gatk']
+    shell:
+        "echo TUMOR {wildcards.sample} > samplename.txt\n"
+        "echo NORMAL {params.normal} >> samplename.txt\n"
+        "bcftools reheader "
+        "    -s samplename.txt "
+        "    -o {params.vcf0} "
+        "    {params.vcf} "
+        "    >> {log.out} 2>> {log.err} \n"
+        "mv {params.vcf0} {params.vcf} \n"
+        "rm samplename.txt \n"
+        "bcftools view "
+        "    -f 'PASS' "
+        "    {params.vcf}"
+        "    -O z "
+        "    -o {output.vcfp}"
+        "    >> {log.out} 2>> {log.err}\n"
+        "tabix -p vcf {output.vcfp} "
+        "    >> {log.out} 2>> {log.err}\n"
+        "tabix -p vcf {params.vcf} "
+        "    >> {log.out} 2>> {log.err}\n"
+        
 
 rule somatic_tn__gridss_assemble_shards:
     input:

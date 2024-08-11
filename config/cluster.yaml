@@ -340,3 +340,31 @@ somatic_tn__mutect2_merge:
     mem: '32g'
     time: '2-00:00:00'
     extra: ' --gres=lscratch:50'
+
+somatic_tn__strelka:
+    partition: 'norm'
+    threads: 24
+    mem: '48g'
+    time: '2-00:00:00'
+    extra: ' --gres=lscratch:50'
+
+somatic_tn__manta:
+    partition: 'norm'
+    threads: 24
+    mem: '48g'
+    time: '2-00:00:00'
+    extra: ' --gres=lscratch:50'
+
+somatic_tn__muse:
+    partition: 'norm'
+    threads: 32
+    mem: '96g'
+    time: '2-00:00:00'
+    extra: ' --gres=lscratch:50'
+
+somatic_tn__muse_post:
+    partition: 'norm'
+    threads: 32
+    mem: '96g'
+    time: '2-00:00:00'
+    extra: ' --gres=lscratch:50'
