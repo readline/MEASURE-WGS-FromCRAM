@@ -113,7 +113,7 @@ rule somatic_tn__strelka:
         cram0 = lambda wildcards: "{}/01.cram/{}/{}.cram".format(config['workdir'], dic_tumor_to_normal[wildcards.sample], dic_tumor_to_normal[wildcards.sample]),
         manta = join(config['workdir'], "34.somatic_sv_manta", "{sample}", "results", "variants", "candidateSmallIndels.vcf.gz"),
     output:
-        vgz = join(config['workdir'], "32.somatic_snv_strelka", "{sample}", "results", "variants", "variants.vcf.gz"),
+        vgz = join(config['workdir'], "32.somatic_snv_strelka", "{sample}", "results", "variants", "somatic.snvs.vcf.gz"),
     params:
         dir = join(config['workdir'], "32.somatic_snv_strelka", "{sample}"),
     log:
