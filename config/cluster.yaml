@@ -325,3 +325,24 @@ somatic_ss__canvas:
     mem: '64g'
     time: '2-00:00:00'
     extra: ' --gres=lscratch:50'
+
+somatic_tn__gridss_assemble_shards:
+    partition: 'norm'
+    threads: 32
+    mem: '64g'
+    time: '2-00:00:00'
+    extra: ' --gres=lscratch:50'
+
+somatic_tn__gridss_call:
+    partition: 'norm'
+    threads: 32
+    mem: '96g'
+    time: '2-00:00:00'
+    extra: ' --gres=lscratch:50'
+
+somatic_tn__gripss:
+    partition: 'norm'
+    threads: 32
+    mem: '64g'
+    time: '2-00:00:00'
+    extra: ' --gres=lscratch:50'
