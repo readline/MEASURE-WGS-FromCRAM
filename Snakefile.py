@@ -169,3 +169,7 @@ rule all:
         #     sample=[i[0] for i in tasks['somatic_paired']],
         # ),
 
+        expand(
+            join(config['workdir'], "35.somatic_tn_sv__gridss", "{sample}", "{sample}.gripss.filtered.vcf.gz"),
+            sample=[i[0] for i in tasks['somatic_paired']],
+        ),

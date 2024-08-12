@@ -251,13 +251,34 @@ rule somatic_tn__muse_post:
         "tabix -p vcf {params.vcf} "
         "    >> {log.out} 2>> {log.err}\n"
         
+rule somatic_tn_gridss_prep:
+    input:
+        ok1   = join(config['workdir'], "15.germline_sv_gridss", "{sample}", "_gridss", "preprocess.ok"),
+        ok0   = lambda wildcards: "{}/15.germline_sv_gridss/{}/_gridss/preprocess.ok".format(config['workdir'], dic_tumor_to_normal[wildcards.sample]),
+    output:
+        ok = join(config['workdir'], "35.somatic_tn_sv__gridss", "{sample}", "_gridss", "prep.ok"),
+    params:
+        workspace = join(config['workdir'], "35.somatic_tn_sv__gridss", "{sample}", "_gridss"),
+        pre1 = lambda wildcards, input: input.ok1.replace('preprocess.ok', '%s.cram.gridss.working'%(wildcards.sample)),
+        pre0 = lambda wildcards, input: input.ok0.replace('preprocess.ok', '%s.cram.gridss.working'%(dic_tumor_to_normal[wildcards.sample])),
+    log:
+        out = join(config['pipelinedir'], "logs", "somatic_tn_gridss_prep", "{sample}.o"),
+        err = join(config['pipelinedir'], "logs", "somatic_tn_gridss_prep", "{sample}.e"),
+    threads:
+        int(allocated("threads", "somatic_tn_gridss_prep", cluster))
+    shell:
+        "cd {params.workspace} \n"
+        "rm -rf * \n"
+        "ln -s {params.pre1} \n"
+        "ln -s {params.pre0} \n"
+        "touch {output.ok}"
+
 
 rule somatic_tn__gridss_assemble_shards:
     input:
         cram1 = join(config['workdir'], "01.cram", "{sample}", "{sample}.cram"),
         cram0 = lambda wildcards: "{}/01.cram/{}/{}.cram".format(config['workdir'], dic_tumor_to_normal[wildcards.sample], dic_tumor_to_normal[wildcards.sample]),
-        ok1   = join(config['workdir'], "15.germline_sv_gridss", "{sample}", "_gridss", "preprocess.ok"),
-        ok0   = lambda wildcards: "{}/15.germline_sv_gridss/{}/_gridss/preprocess.ok".format(config['workdir'], dic_tumor_to_normal[wildcards.sample]),
+        ok = join(config['workdir'], "35.somatic_tn_sv__gridss", "{sample}", "_gridss", "prep.ok"),
     output:
         ok = join(config['workdir'], "35.somatic_tn_sv__gridss", "{sample}", "_gridss", "assemble_{shard}.ok"),
     params:
@@ -272,6 +293,8 @@ rule somatic_tn__gridss_assemble_shards:
     container:
         config['container']['gridss']
     shell:
+        "cd {params.workspace}"
+        "  > {log.out} 2> {log.err}\n"
         "gridss "
         "  -s assemble "
         "  -r {config[references][gatkbundle]}/Homo_sapiens_assembly38.fasta"
