@@ -159,10 +159,10 @@ rule all:
         #     join(config['workdir'], "32.somatic_snv_strelka", "{sample}", "results", "variants", "variants.vcf.gz"),
         #     sample=[i[0] for i in tasks['somatic_paired']],
         # ),
-        expand(
-            join(config['workdir'], "33.somatic_snv_muse", "{sample}", "{sample}.MuSE.pass.vcf.gz"),
-            sample=[i[0] for i in tasks['somatic_paired']],
-        ),
+        # expand(
+        #     join(config['workdir'], "33.somatic_snv_muse", "{sample}", "{sample}.MuSE.pass.vcf.gz"),
+        #     sample=[i[0] for i in tasks['somatic_paired']],
+        # ),
 
         # expand(
         #     join(config['workdir'], "35.somatic_tn_sv__gridss", "{sample}", "{sample}.gripss.filtered.vcf.gz"),
@@ -170,6 +170,6 @@ rule all:
         # ),
 
         expand(
-            join(config['workdir'], "35.somatic_tn_sv__gridss", "{sample}", "{sample}.gripss.filtered.vcf.gz"),
+            join(config['workdir'], "36.somatic_tn_sv__delly", "{sample}", "{sample}.delly.somatic.bcf"),
             sample=[i[0] for i in tasks['somatic_paired']],
         ),

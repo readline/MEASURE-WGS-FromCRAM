@@ -370,3 +370,75 @@ rule somatic_tn__gripss:
         "  -vcf {input.vcf} "
         "  -output_dir {params.dir}"
         "  > {log.out} 2> {log.err}\n"
+
+rule somatic_tn__dellysv:
+    input:
+        cram = join(config['workdir'], "01.cram", "{sample}", "{sample}.cram"),
+        cram0 = lambda wildcards: "{}/01.cram/{}/{}.cram".format(config['workdir'], dic_tumor_to_normal[wildcards.sample], dic_tumor_to_normal[wildcards.sample]),
+    output:
+        prebcf = join(config['workdir'], "36.somatic_tn_sv__delly", "{sample}", "{sample}.delly.pre.bcf"),
+    params:
+        callbcf = join(config['workdir'], "36.somatic_tn_sv__delly", "{sample}", "{sample}.delly.bcf"),
+        prebcf = join(config['workdir'], "36.somatic_tn_sv__delly", "{sample}", "{sample}.delly.pre.bcf"),
+        genobcf = join(config['workdir'], "36.somatic_tn_sv__delly", "{sample}", "{sample}.delly.geno.bcf"),
+        samplelist = join(config['workdir'], "36.somatic_tn_sv__delly", "{sample}", "sample.list"),
+        tumorsid  = lambda wildcards: dic_tumor_to_normal[wildcards.sample],
+        normalsid = lambda wildcards: dic_sample_to_sid[dic_tumor_to_normal[wildcards.sample]],
+    log:
+        out = join(config['pipelinedir'], "logs", "somatic_tn__dellysv", "{sample}.o"),
+        err = join(config['pipelinedir'], "logs", "somatic_tn__dellysv", "{sample}.e"),
+    threads:
+        int(allocated("threads", "somatic_tn__dellysv", cluster))
+    container:
+        config['container']['delly']
+    shell:
+        "delly call "
+        "    -g {config[references][gatkbundle]}/Homo_sapiens_assembly38.fasta "
+        "    -x {config[references][delly]}/human.hg38.excl.tsv "
+        "    -o {params.callbcf} "
+        "    {input.cram} "
+        "    {input.cram0}"
+        "  > {log.out} 2> {log.err}\n"
+        "echo '{params.tumorsid}\ttumor' > {params.samplelist}\n"
+        "echo '{params.normalsid}\tcontrol' >> {params.samplelist}\n"
+           "delly filter "
+        "    -f somatic "
+        "    -o {output.prebcf} "
+        "    -s {params.samplelist} "
+        "    {params.callbcf} "
+        "  >> {log.out} 2>> {log.err}\n"
+
+rule somatic_tn__dellysv2:
+    input:
+        cram = join(config['workdir'], "01.cram", "{sample}", "{sample}.cram"),
+        cram0 = lambda wildcards: "{}/01.cram/{}/{}.cram".format(config['workdir'], dic_tumor_to_normal[wildcards.sample], dic_tumor_to_normal[wildcards.sample]),
+        prebcf = join(config['workdir'], "36.somatic_tn_sv__delly", "{sample}", "{sample}.delly.pre.bcf"),
+    output:
+        bcf = join(config['workdir'], "36.somatic_tn_sv__delly", "{sample}", "{sample}.delly.somatic.bcf"),
+    params:
+        callbcf = join(config['workdir'], "36.somatic_tn_sv__delly", "{sample}", "{sample}.delly.bcf"),
+        prebcf = join(config['workdir'], "36.somatic_tn_sv__delly", "{sample}", "{sample}.delly.pre.bcf"),
+        genobcf = join(config['workdir'], "36.somatic_tn_sv__delly", "{sample}", "{sample}.delly.geno.bcf"),
+        samplelist = join(config['workdir'], "36.somatic_tn_sv__delly", "{sample}", "sample.list"),
+    log:
+        out = join(config['pipelinedir'], "logs", "somatic_tn__dellysv2", "{sample}.o"),
+        err = join(config['pipelinedir'], "logs", "somatic_tn__dellysv2", "{sample}.e"),
+    threads:
+        int(allocated("threads", "somatic_tn__dellysv2", cluster))
+    container:
+        config['container']['delly']
+    shell:
+        "delly call "
+        "    -g {config[references][gatkbundle]}/Homo_sapiens_assembly38.fasta "
+        "    -v {input.prebcf} "
+        "    -o {params.genobcf} "
+        "    -x {config[references][delly]}/human.hg38.excl.tsv "
+        "    {input.cram} "
+        "    $(ls {config[references][pon]}/cram/*.cram)"
+        "  > {log.out} 2> {log.err}\n"
+        "delly filter "
+        "    -f somatic "
+        "    -o {output.bcf} "
+        "    -s {params.samplelist} "
+        "    {params.genobcf}"
+        "  >> {log.out} 2>> {log.err}\n"

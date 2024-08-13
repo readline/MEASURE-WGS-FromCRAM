@@ -356,6 +356,12 @@ somatic_tn__manta:
     extra: ' --gres=lscratch:50'
 
 somatic_tn__muse:
+    partition: 'norm'
+    threads: 32
+    mem: '64g'
+    time: '2-00:00:00'
+    extra: ' --gres=lscratch:50'
+
 somatic_tn__gridss_assemble_shards:
     partition: 'norm'
     threads: 32
@@ -374,9 +380,24 @@ somatic_tn__muse_post:
     partition: 'norm'
     threads: 32
     mem: '96g'
+
 somatic_tn__gripss:
     partition: 'norm'
     threads: 32
     mem: '64g'
+    time: '2-00:00:00'
+    extra: ' --gres=lscratch:50'
+
+somatic_tn__dellysv:
+    partition: 'norm'
+    threads: 16
+    mem: '72g'
+    time: '2-00:00:00'
+    extra: ' --gres=lscratch:50'
+
+omatic_tn__dellysv2:
+    partition: 'norm'
+    threads: 32
+    mem: '128g'
     time: '2-00:00:00'
     extra: ' --gres=lscratch:50'
