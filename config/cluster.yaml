@@ -278,11 +278,11 @@ somatic_ss__dellysv:
     extra: ' --gres=lscratch:50'
 
 somatic_ss__dellysv_joint:
-    partition: 'largemem'
+    partition: 'norm'
     threads: 32
-    mem: '512g'
+    mem: '192g'
     time: '2-00:00:00'
-    extra: ' --gres=lscratch:50'
+    extra: ' --gres=lscratch:50 --constraint=e7543'
 
 somatic_ss__dellysv_post:
     partition: 'norm'
@@ -410,11 +410,11 @@ somatic_tn__dellysv:
     extra: ' --gres=lscratch:50'
 
 somatic_tn__dellysv_joint:
-    partition: 'largemem'
+    partition: 'norm'
     threads: 32
-    mem: '1024g'
+    mem: '192g'
     time: '2-00:00:00'
-    extra: ' --gres=lscratch:50'
+    extra: ' --gres=lscratch:50 --constraint=e7543'
 
 somatic_tn__dellysv_post:
     partition: 'norm'
