@@ -39,3 +39,6 @@ references:
         clean:
                 - reference/virusbreakenddb_20210401.tar.gz
         path:   reference/virusbreakend
+    annotsv:
+        link:   /data/yuk5/data/AnnotSV
+        path:   reference/AnnotSV
