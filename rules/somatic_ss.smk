@@ -312,58 +312,90 @@ rule somatic_ss__dellysv:
         "  >> {log.out} 2>> {log.err}\n"
 
 
-rule somatic_ss__dellysv_int:
+rule somatic_ss__dellysv_joint:
     input:
         crams = lambda wildcards: 
-            ["{}/01.cram/{}/{}.cram".format(config['workdir'], sample, sample) for sample in tasks['somatic_ss']+[i[0] for i in tasks['somatic_paired']]]
+            ["{}/01.cram/{}/{}.cram".format(config['workdir'], sample, sample) for sample in tasks['somatic_ss']+[i[0] for i in tasks['somatic_paired']]],
         bcfs = lambda wildcards: 
-            ["{}/45.somatic_ss_sv__delly/{}/{}.delly.bcf".format(config['workdir'], sample, sample) for sample in tasks['somatic_ss']+[i[0] for i in tasks['somatic_paired']]]
+            ["{}/45.somatic_ss_sv__delly/{}/{}.delly.bcf".format(config['workdir'], sample, sample) for sample in tasks['somatic_ss']+[i[0] for i in tasks['somatic_paired']]],
     output:
-        bcf = join(config['workdir'], "36.somatic_tn_sv__delly", "MergedCalls", "Merge.delly.somatic.bcf"),
-        vcf = join(config['workdir'], "36.somatic_tn_sv__delly", "MergedCalls", "Merge.delly.somatic.vcf"),
-        gvcf = join(config['workdir'], "36.somatic_tn_sv__delly", "MergedCalls", "Merge.delly.gvcf"),
+        premerge = join(config['workdir'], "45.somatic_ss_sv__delly", "JointCalls", "Merge.delly.pre.bcf"),
+        genobcf = join(config['workdir'], "45.somatic_ss_sv__delly", "JointCalls", "Merge.delly.geno.bcf"),
     params:
-        genobcf = join(config['workdir'], "36.somatic_tn_sv__delly", "MergedCalls", "Merge.delly.geno.bcf"),
-        samplelist = join(config['workdir'], "36.somatic_tn_sv__delly", "{sample}", "sample.list"),
+        dir = join(config['workdir'], "45.somatic_ss_sv__delly", "JointCalls"),
     log:
-        out = join(config['pipelinedir'], "logs", "somatic_ss__dellysv_int", "{sample}.o"),
-        err = join(config['pipelinedir'], "logs", "somatic_ss__dellysv_int", "{sample}.e"),
+        out = join(config['pipelinedir'], "logs", "somatic_ss__dellysv_int", "Merge.o"),
+        err = join(config['pipelinedir'], "logs", "somatic_ss__dellysv_int", "Merge.e"),
     threads:
         int(allocated("threads", "somatic_ss__dellysv_int", cluster))
     container:
         config['container']['delly']
     shell:
+        "cd {params.dir} \n"
         "ls {input.crams} | while read n; do\n"
         "  echo $(samtools samples $n | cut -f1)'\ttumor'\n"
         "done > sample.list \n"
         "ls {config[references][pon]}/cram/*.cram | while read n; do\n"
         "  echo $(samtools samples $n | cut -f1)'\tcontrol'\n"
         "done >> sample.list \n"
+        "bcftools merge "
+        "    -m id "
+        "    -O b "
+        "    --force-single "
+        "    -o {output.premerge} "
+        "    {input.bcfs}"
+        "  > {log.out} 2> {log.err}\n"
         "delly call "
         "    -g {config[references][gatkbundle]}/Homo_sapiens_assembly38.fasta "
-        "    -v {input.prebcf} "
-        "    -o {params.genobcf} "
+        "    -v {output.premerge} "
+        "    -o {output.genobcf} "
         "    -x {config[references][delly]}/human.hg38.excl.tsv "
         "    {input.crams} "
         "    $(ls {config[references][pon]}/cram/*.cram)"
-        "  > {log.out} 2> {log.err}\n"
+        "  >> {log.out} 2>> {log.err}\n"
+
+rule somatic_ss__dellysv_post:
+    input:
+        genobcf = join(config['workdir'], "45.somatic_ss_sv__delly", "JointCalls", "Merge.delly.geno.bcf"),
+    output:
+        bcf = join(config['workdir'], "45.somatic_ss_sv__delly", "JointCalls", "Merge.delly.somatic.bcf"),
+        vcf = join(config['workdir'], "45.somatic_ss_sv__delly", "JointCalls", "Merge.delly.somatic.vcf.gz"),
+        bcfg = join(config['workdir'], "45.somatic_ss_sv__delly", "JointCalls", "Merge.delly.germline.bcf"),
+        vcfg = join(config['workdir'], "45.somatic_ss_sv__delly", "JointCalls", "Merge.delly.germline.vcf.gz"),
+        gvcf = join(config['workdir'], "45.somatic_ss_sv__delly", "JointCalls", "Merge.delly.gvcf.gz"),
+    params:
+        dir = join(config['workdir'], "45.somatic_ss_sv__delly", "JointCalls"),
+        samplelist = join(config['workdir'], "45.somatic_ss_sv__delly", "JointCalls", "sample.list"),
+    log:
+        out = join(config['pipelinedir'], "logs", "somatic_ss__dellysv_post", "Post.o"),
+        err = join(config['pipelinedir'], "logs", "somatic_ss__dellysv_post", "Post.e"),
+    threads:
+        int(allocated("threads", "somatic_ss__dellysv_post", cluster))
+    container:
+        config['container']['delly']
+    shell:
+        "cd {params.dir} \n"
         "delly filter "
         "    -f somatic "
         "    -o {output.bcf} "
-        "    -s {params.samplelist} "
-        "    {params.genobcf}"
-        "  >> {log.out} 2>> {log.err}\n"
+        "    -s sample.list "
+        "    {input.genobcf}"
+        "  > {log.out} 2> {log.err}\n"
         "delly filter "
         "    -f germline "
-        "    -o {output.bcf} "
-        "    -s {params.samplelist} "
-        "    {params.genobcf}"
+        "    -o {output.bcfg} "
+        "    -s sample.list "
+        "    {input.genobcf}"
         "  >> {log.out} 2>> {log.err}\n"
         "bcftools view {output.bcf} | bgzip > {output.vcf}"
         "  2>> {log.err}\n"
         "tabix -p vcf {output.vcf}"
         "  >> {log.out} 2>> {log.err}\n"
-        "bcftools view {params.genobcf} | bgzip > {output.gvcf}"
+        "bcftools view {output.bcfg} | bgzip > {output.vcfg}"
+        "  2>> {log.err}\n"
+        "tabix -p vcf {output.vcfg}"
+        "  >> {log.out} 2>> {log.err}\n"
+        "bcftools view {input.genobcf} | bgzip > {output.gvcf}"
         "  2>> {log.err}\n"
         "tabix -p vcf {output.gvcf}"
         "  >> {log.out} 2>> {log.err}\n"

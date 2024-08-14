@@ -378,11 +378,12 @@ rule somatic_tn__dellysv:
     output:
         prebcf = join(config['workdir'], "36.somatic_tn_sv__delly", "{sample}", "{sample}.delly.pre.bcf"),
     params:
+        dir = join(config['workdir'], "36.somatic_tn_sv__delly", "{sample}"),
         callbcf = join(config['workdir'], "36.somatic_tn_sv__delly", "{sample}", "{sample}.delly.bcf"),
         prebcf = join(config['workdir'], "36.somatic_tn_sv__delly", "{sample}", "{sample}.delly.pre.bcf"),
         genobcf = join(config['workdir'], "36.somatic_tn_sv__delly", "{sample}", "{sample}.delly.geno.bcf"),
         samplelist = join(config['workdir'], "36.somatic_tn_sv__delly", "{sample}", "sample.list"),
-        tumorsid  = lambda wildcards: dic_tumor_to_normal[wildcards.sample],
+        tumorsid  = lambda wildcards: dic_sample_to_sid[wildcards.sample],
         normalsid = lambda wildcards: dic_sample_to_sid[dic_tumor_to_normal[wildcards.sample]],
     log:
         out = join(config['pipelinedir'], "logs", "somatic_tn__dellysv", "{sample}.o"),
@@ -392,6 +393,7 @@ rule somatic_tn__dellysv:
     container:
         config['container']['delly']
     shell:
+        "cd {params.dir} \n"
         "delly call "
         "    -g {config[references][gatkbundle]}/Homo_sapiens_assembly38.fasta "
         "    -x {config[references][delly]}/human.hg38.excl.tsv "
@@ -408,37 +410,199 @@ rule somatic_tn__dellysv:
         "    {params.callbcf} "
         "  >> {log.out} 2>> {log.err}\n"
 
-rule somatic_tn__dellysv2:
+rule somatic_tn__dellysv_joint:
     input:
-        cram = join(config['workdir'], "01.cram", "{sample}", "{sample}.cram"),
-        cram0 = lambda wildcards: "{}/01.cram/{}/{}.cram".format(config['workdir'], dic_tumor_to_normal[wildcards.sample], dic_tumor_to_normal[wildcards.sample]),
-        prebcf = join(config['workdir'], "36.somatic_tn_sv__delly", "{sample}", "{sample}.delly.pre.bcf"),
+        crams = lambda wildcards: 
+            ["{}/01.cram/{}/{}.cram".format(config['workdir'], sample, sample) for sample in [i[0] for i in tasks['somatic_paired']]],
+        crams0 = lambda wildcards: 
+            ["{}/01.cram/{}/{}.cram".format(config['workdir'], sample, sample) for sample in [i[1] for i in tasks['somatic_paired']]],
+        bcfs = lambda wildcards: 
+            ["{}/36.somatic_tn_sv__delly/{}/{}.delly.pre.bcf".format(config['workdir'], sample, sample) for sample in [i[0] for i in tasks['somatic_paired']]],
     output:
-        bcf = join(config['workdir'], "36.somatic_tn_sv__delly", "{sample}", "{sample}.delly.somatic.bcf"),
+        premerge = join(config['workdir'], "36.somatic_tn_sv__delly", "JointCalls", "Merge.delly.pre.bcf"),
+        genobcf = join(config['workdir'], "36.somatic_tn_sv__delly", "JointCalls", "Merge.delly.geno.bcf"),
     params:
-        callbcf = join(config['workdir'], "36.somatic_tn_sv__delly", "{sample}", "{sample}.delly.bcf"),
-        prebcf = join(config['workdir'], "36.somatic_tn_sv__delly", "{sample}", "{sample}.delly.pre.bcf"),
-        genobcf = join(config['workdir'], "36.somatic_tn_sv__delly", "{sample}", "{sample}.delly.geno.bcf"),
-        samplelist = join(config['workdir'], "36.somatic_tn_sv__delly", "{sample}", "sample.list"),
+        dir = join(config['workdir'], "36.somatic_tn_sv__delly", "JointCalls"),
     log:
-        out = join(config['pipelinedir'], "logs", "somatic_tn__dellysv2", "{sample}.o"),
-        err = join(config['pipelinedir'], "logs", "somatic_tn__dellysv2", "{sample}.e"),
+        out = join(config['pipelinedir'], "logs", "somatic_tn__dellysv2", "Merge.o"),
+        err = join(config['pipelinedir'], "logs", "somatic_tn__dellysv2", "Merge.e"),
     threads:
         int(allocated("threads", "somatic_tn__dellysv2", cluster))
     container:
         config['container']['delly']
     shell:
+        "cd {params.dir} \n"
+        "ls {input.crams} | while read n; do\n"
+        "  echo $(samtools samples $n | cut -f1)'\ttumor'\n"
+        "done > sample.list \n"
+        "ls {input.crams0} | while read n; do\n"
+        "  echo $(samtools samples $n | cut -f1)'\tcontrol'\n"
+        "done >> sample.list \n"
+        "ls {config[references][pon]}/cram/*.cram | while read n; do\n"
+        "  echo $(samtools samples $n | cut -f1)'\tcontrol'\n"
+        "done >> sample.list \n"
+        "bcftools merge "
+        "    -m id "
+        "    -O b "
+        "    --force-single "
+        "    -o {output.premerge} "
+        "    {input.bcfs}"
+        "  > {log.out} 2> {log.err}\n"
         "delly call "
         "    -g {config[references][gatkbundle]}/Homo_sapiens_assembly38.fasta "
-        "    -v {input.prebcf} "
-        "    -o {params.genobcf} "
+        "    -v {output.premerge} "
+        "    -o {output.genobcf} "
         "    -x {config[references][delly]}/human.hg38.excl.tsv "
-        "    {input.cram} "
+        "    {input.crams} "
+        "    {input.crams0} "
         "    $(ls {config[references][pon]}/cram/*.cram)"
-        "  > {log.out} 2> {log.err}\n"
+        "  >> {log.out} 2>> {log.err}\n"
+
+
+rule somatic_tn__dellysv_post:
+    input:
+        genobcf = join(config['workdir'], "36.somatic_tn_sv__delly", "JointCalls", "Merge.delly.geno.bcf"),
+    output:
+        bcf = join(config['workdir'], "36.somatic_tn_sv__delly", "JointCalls", "Merge.delly.somatic.bcf"),
+        vcf = join(config['workdir'], "36.somatic_tn_sv__delly", "JointCalls", "Merge.delly.somatic.vcf.gz"),
+        bcfg = join(config['workdir'], "36.somatic_tn_sv__delly", "JointCalls", "Merge.delly.germline.bcf"),
+        vcfg = join(config['workdir'], "36.somatic_tn_sv__delly", "JointCalls", "Merge.delly.germline.vcf.gz"),
+        gvcf = join(config['workdir'], "36.somatic_tn_sv__delly", "JointCalls", "Merge.delly.gvcf.gz"),
+    params:
+        dir = join(config['workdir'], "36.somatic_tn_sv__delly", "JointCalls"),
+    log:
+        out = join(config['pipelinedir'], "logs", "somatic_tn__dellysv_post", "Post.o"),
+        err = join(config['pipelinedir'], "logs", "somatic_tn__dellysv_post", "Post.e"),
+    threads:
+        int(allocated("threads", "somatic_tn__dellysv_post", cluster))
+    container:
+        config['container']['delly']
+    shell:
+        "cd {params.dir} \n"
         "delly filter "
         "    -f somatic "
         "    -o {output.bcf} "
-        "    -s {params.samplelist} "
-        "    {params.genobcf}"
+        "    -s sample.list "
+        "    {input.genobcf}"
+        "  > {log.out} 2> {log.err}\n"
+        "delly filter "
+        "    -f germline "
+        "    -o {output.bcfg} "
+        "    -s sample.list "
+        "    {input.genobcf}"
         "  >> {log.out} 2>> {log.err}\n"
+        "bcftools view {output.bcf} | bgzip > {output.vcf}"
+        "  2>> {log.err}\n"
+        "tabix -p vcf {output.vcf}"
+        "  >> {log.out} 2>> {log.err}\n"
+        "bcftools view {output.bcfg} | bgzip > {output.vcfg}"
+        "  2>> {log.err}\n"
+        "tabix -p vcf {output.vcfg}"
+        "  >> {log.out} 2>> {log.err}\n"
+        "bcftools view {input.genobcf} | bgzip > {output.gvcf}"
+        "  2>> {log.err}\n"
+        "tabix -p vcf {output.gvcf}"
+        "  >> {log.out} 2>> {log.err}\n"
+
+rule somatic_tn__amber:
+    input:
+        cram = join(config['workdir'], "01.cram", "{sample}", "{sample}.cram"),
+        cram0 = lambda wildcards: "{}/01.cram/{}/{}.cram".format(config['workdir'], dic_tumor_to_normal[wildcards.sample], dic_tumor_to_normal[wildcards.sample]),
+    output:
+        ok = join(config['workdir'], "38.somatic_tn_cnv__purple", "{sample}", "amber", "amber.ok"),
+    params:
+        dir = join(config['workdir'], "38.somatic_tn_cnv__purple", "{sample}", "amber"),
+        normal = lambda wildcards: dic_tumor_to_normal[wildcards.sample],
+    log:
+        out = join(config['pipelinedir'], "logs", "somatic_tn__amber", "{sample}.o"),
+        err = join(config['pipelinedir'], "logs", "somatic_tn__amber", "{sample}.e"),
+    threads:
+        int(allocated("threads", "somatic_tn__amber", cluster))
+    container:
+        config['container']['amber']
+    shell:
+        "cd {params.dir} \n"
+        "java -Xmx24G "
+        "    -jar /usr/local/share/hmftools-amber-4.0.1-0/amber.jar "
+        "    -tumor {wildcards.sample} "
+        "    -tumor_bam {input.cram} "
+        "    -reference {params.normal}"
+        "    -reference_bam {input.cram0}"
+        "    -output_dir {params.dir} "
+        "    -threads {threads} "
+        "    -loci {config[references][hmftools]}/ref/38/copy_number/AmberGermlineSites.38.tsv.gz "
+        "    -ref_genome {config[references][gatkbundle]}/Homo_sapiens_assembly38.fasta "
+        "    -ref_genome_version 38"
+        "  > {log.out} 2> {log.err}\n"
+        "touch {output.ok}"
+
+rule somatic_tn__cobalt:
+    input:
+        cram = join(config['workdir'], "01.cram", "{sample}", "{sample}.cram"),
+        cram0 = lambda wildcards: "{}/01.cram/{}/{}.cram".format(config['workdir'], dic_tumor_to_normal[wildcards.sample], dic_tumor_to_normal[wildcards.sample]),
+    output:
+        ok = join(config['workdir'], "38.somatic_tn_cnv__purple", "{sample}", "cobalt", "cobalt.ok"),
+    params:
+        dir = join(config['workdir'], "38.somatic_tn_cnv__purple", "{sample}", "cobalt"),
+        normal = lambda wildcards: dic_tumor_to_normal[wildcards.sample],
+    log:
+        out = join(config['pipelinedir'], "logs", "somatic_tn__cobalt", "{sample}.o"),
+        err = join(config['pipelinedir'], "logs", "somatic_tn__cobalt", "{sample}.e"),
+    threads:
+        int(allocated("threads", "somatic_tn__cobalt", cluster))
+    container:
+        config['container']['cobalt']
+    shell:
+        "cd {params.dir} \n"
+        "java -Xmx12G "
+        "    -jar /usr/local/share/hmftools-cobalt-1.16-0/cobalt.jar "
+        "    -tumor {wildcards.sample} "
+        "    -tumor_bam {input.cram} "
+        "    -reference {params.normal}"
+        "    -reference_bam {input.cram0}"
+        "    -output_dir {params.dir} "
+        "    -threads {threads} "
+        "    -ref_genome {config[references][gatkbundle]}/Homo_sapiens_assembly38.fasta "
+        "    -gc_profile {config[references][hmftools]}/ref/38/copy_number/GC_profile.1000bp.38.cnp"
+        "  > {log.out} 2> {log.err}\n"
+        "touch {output.ok}"
+
+rule somatic_tn__purple:
+    input:
+        cram = join(config['workdir'], "01.cram", "{sample}", "{sample}.cram"),
+        amber = join(config['workdir'], "38.somatic_tn_cnv__purple", "{sample}", "amber", "amber.ok"),
+        cobalt = join(config['workdir'], "38.somatic_tn_cnv__purple", "{sample}", "cobalt", "cobalt.ok"),
+        mutect = join(config['workdir'], "31.somatic_tn_snvindel_mutect2", "{sample}", "{sample}.mutect2.pass.vcf.gz"),
+        gripss = join(config['workdir'], "35.somatic_tn_sv__gridss", "{sample}", "{sample}.gripss.filtered.vcf.gz"),
+    output:
+        cnv = join(config['workdir'], "38.somatic_tn_cnv__purple", "{sample}", "{sample}.purple.cnv.somatic.tsv"),
+    params:
+        dir = join(config['workdir'], "38.somatic_tn_cnv__purple", "{sample}"),
+        normal = lambda wildcards: dic_tumor_to_normal[wildcards.sample],
+        gripssraw = lambda wildcards, input: input.gripss.replace('filtered.','')
+    log:
+        out = join(config['pipelinedir'], "logs", "somatic_tn__purple", "{sample}.o"),
+        err = join(config['pipelinedir'], "logs", "somatic_tn__purple", "{sample}.e"),
+    threads:
+        int(allocated("threads", "somatic_tn__purple", cluster))
+    container:
+        config['container']['purple']
+    shell:
+        "cd {params.dir}\n"
+        "java -Xmx24G "
+        "    -jar /usr/local/share/hmftools-purple-4.0.2-0/purple.jar "
+        "    -tumor {wildcards.sample} "
+        "    -reference {params.normal}"
+        "    -amber $(dirname $(realpath {input.amber})) "
+        "    -cobalt $(dirname $(realpath {input.cobalt})) "
+        "    -gc_profile {config[references][hmftools]}/ref/38/copy_number/GC_profile.1000bp.38.cnp "
+        "    -ref_genome {config[references][gatkbundle]}/Homo_sapiens_assembly38.fasta "
+        "    -ref_genome_version 38 "
+        "    -ensembl_data_dir {config[references][hmftools]}/ref/38/common/ensembl_data "
+        "    -somatic_hotspots {config[references][hmftools]}/ref/38/variants/KnownHotspots.somatic.38.vcf.gz "
+        "    -somatic_vcf {input.mutect} "
+        "    -somatic_sv_vcf {input.gripss} "
+        "    -sv_recovery_vcf {params.gripssraw} "
+        "    -driver_gene_panel {config[references][hmftools]}/ref/38/common/DriverGenePanel.38.tsv "
+        "    -output_dir {params.dir}"
+        "  > {log.out} 2> {log.err}\n"

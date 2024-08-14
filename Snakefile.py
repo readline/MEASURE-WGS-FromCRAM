@@ -134,10 +134,9 @@ rule all:
         #     join(config['workdir'], "44.somatic_ss_sv__gridss", "{sample}", "{sample}.gripss.filtered.vcf.gz"),
         #     sample=tasks['somatic_ss'],
         # ),
-        # expand(
-        #     join(config['workdir'], "45.somatic_ss_sv__delly", "{sample}", "{sample}.delly.vcf.gz"),
-        #     sample=tasks['somatic_ss'],
-        # ),
+        expand(
+              join(config['workdir'], "45.somatic_ss_sv__delly", "JointCalls", "Merge.delly.somatic.vcf.gz"),
+        ),
         # expand(
         #     join(config['workdir'], "46.somatic_ss_cnv__cnvkit", "{sample}", "cnvkit.ok"),
         #     sample=tasks['somatic_ss']+[i[0] for i in tasks['somatic_paired']],
@@ -163,13 +162,15 @@ rule all:
         #     join(config['workdir'], "33.somatic_snv_muse", "{sample}", "{sample}.MuSE.pass.vcf.gz"),
         #     sample=[i[0] for i in tasks['somatic_paired']],
         # ),
-
         # expand(
         #     join(config['workdir'], "35.somatic_tn_sv__gridss", "{sample}", "{sample}.gripss.filtered.vcf.gz"),
         #     sample=[i[0] for i in tasks['somatic_paired']],
         # ),
-
         expand(
-            join(config['workdir'], "36.somatic_tn_sv__delly", "{sample}", "{sample}.delly.somatic.bcf"),
+            join(config['workdir'], "36.somatic_tn_sv__delly", "JointCalls", "Merge.delly.somatic.vcf.gz"),
+        ),
+        expand(
+            join(config['workdir'], "38.somatic_tn_cnv__purple", "{sample}", "{sample}.purple.cnv.somatic.tsv"),
             sample=[i[0] for i in tasks['somatic_paired']],
         ),
+        
