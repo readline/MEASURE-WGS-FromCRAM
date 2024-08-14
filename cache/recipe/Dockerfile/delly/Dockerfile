@@ -38,6 +38,17 @@ RUN cd /opt \
     && make STATIC=1 PARALLEL=1 all \
     && make install
 
+# install htslib, samtools, bcftools
+RUN apt-get update && apt-get install -y wget && apt-get clean\
+&& cd /opt \
+&& wget https://github.com/samtools/htslib/releases/download/1.20/htslib-1.20.tar.bz2 \
+&& wget https://github.com/samtools/samtools/releases/download/1.20/samtools-1.20.tar.bz2 \
+&& wget https://github.com/samtools/bcftools/releases/download/1.20/bcftools-1.20.tar.bz2 \
+&& cd /opt && tar jxvf htslib-1.20.tar.bz2 && cd /opt/htslib-1.20 && ./configure && make && make install \
+&& cd /opt && tar jxvf samtools-1.20.tar.bz2 && cd /opt/samtools-1.20 && ./configure && make && make install \
+&& cd /opt && tar jxvf bcftools-1.20.tar.bz2 && cd /opt/bcftools-1.20 && ./configure && make && make install \
+&& cd /opt && rm -rf /opt/htslib-1.20 /opt/samtools-1.20 /opt/bcftools-1.20 htslib-1.20.tar.bz2 samtools-1.20.tar.bz2 bcftools-1.20.tar.bz2
+
 
 # Multi-stage build
 FROM alpine:latest
