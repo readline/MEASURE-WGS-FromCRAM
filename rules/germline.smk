@@ -79,6 +79,7 @@ rule germline__deepvariant3:
         status = join( config['workdir'], "11.germline_snv_deepvariant", "{sample}", "temp", "step2.ok" ),
     output:
         vcf  = join( config['workdir'], "11.germline_snv_deepvariant", "{sample}", "{sample}.deepvariant.vcf.gz" ),
+        vcfp  = join( config['workdir'], "11.germline_snv_deepvariant", "{sample}", "{sample}.deepvariant.pass.vcf.gz" ),
         gvcf = join( config['workdir'], "11.germline_snv_deepvariant", "{sample}", "{sample}.deepvariant.gvcf.gz" ),
     params:
         folder = join( config['workdir'], "11.germline_snv_deepvariant", "{sample}", "temp"),
@@ -103,17 +104,15 @@ rule germline__deepvariant3:
         "    --gvcf_outfile {params.gvcf}"
         " > {log.out} 2> {log.err}\n"
         "singularity exec -B {params.bind} --nv {params.sif} "
-        "bgzip {params.vcf}"
+        "bcftools view -W -O z -o {output.vcf} {params.vcf}"
         " >> {log.out} 2>> {log.err}\n"
         "singularity exec -B {params.bind} --nv {params.sif} "
-        "bgzip {params.gvcf}"
+        "bcftools view -W -O z -f PASS -o {output.vcfp} {params.vcf}"
         " >> {log.out} 2>> {log.err}\n"
         "singularity exec -B {params.bind} --nv {params.sif} "
-        "tabix -p vcf {output.vcf}"
+        "bcftools view -W -O z -o {output.gvcf} {params.gvcf}"
         " >> {log.out} 2>> {log.err}\n"
-        "singularity exec -B {params.bind} --nv {params.sif} "
-        "tabix -p vcf  {output.gvcf}"
-        " >> {log.out} 2>> {log.err}\n"
+        "rm -rf {params.folder}"
 
 
 rule germline__gatk_hcitv:
@@ -126,7 +125,7 @@ rule germline__gatk_hcitv:
         out = join(config['pipelinedir'], "logs", "germline__gatk_hcitv", "{sample}.{itv}.o"),
         err = join(config['pipelinedir'], "logs", "germline__gatk_hcitv", "{sample}.{itv}.e"),
     threads:
-        int(allocated("threads", "germline__gatk_hcitv", cluster))
+        int(allocated("threads", "cpu4_large", cluster))
     container:
         config['container']['gatk']
     shell:
@@ -148,6 +147,7 @@ rule germline__gatk_hcmerge:
         gvcf = generate_germline__gatk_hcmerge_input_gvcf,
         bam  = generate_germline__gatk_hcmerge_input_bam,
     params:
+        itvsdir=join(config['workdir'], "10.germline_snv_gatk", "{sample}", "itvs")
         tmpbam="/lscratch/$SLURM_JOB_ID/{sample}.vcf.bamout.bam",
         inputvcfs=lambda wildcards, input: " ".join("-I {} ".format(in_) for in_ in input.gvcf),
         inputbams=lambda wildcards, input: " ".join(" {} ".format(in_) for in_ in input.bam),
@@ -159,7 +159,7 @@ rule germline__gatk_hcmerge:
         out = join(config['pipelinedir'], "logs", "germline__gatk_hcmerge", "{sample}.o"),
         err = join(config['pipelinedir'], "logs", "germline__gatk_hcmerge", "{sample}.e"),
     threads:
-        int(allocated("threads", "germline__gatk_hcmerge", cluster))
+        int(allocated("threads", "cpu8_large", cluster))
     container:
         config['container']['gatk']
     shell:
@@ -188,6 +188,8 @@ rule germline__gatk_hcmerge:
         "    --THREAD_COUNT {threads}"
         "    -TI {config[references][gatkbundle]}/wgs_calling_regions.hg38.interval_list"
         " >> {log.out} 2>> {log.err}\n"
+        "rm -rf {params.itvsdir}"
+        " >> {log.out} 2>> {log.err}\n"
 
 
 rule germline__gdbimport:
@@ -204,7 +206,7 @@ rule germline__gdbimport:
         out = join(config['pipelinedir'], "logs", "germline__gdbimport", "itv_{itv}.o"),
         err = join(config['pipelinedir'], "logs", "germline__gdbimport", "itv_{itv}.e"),
     threads:
-        int(allocated("threads", "germline__gdbimport", cluster))
+        int(allocated("threads", "cpu8_large", cluster))
     container:
         config['container']['gatk']
     shell:
@@ -256,13 +258,14 @@ rule germline__genotyping:
         mirv  = join(config['workdir'], "10.germline_snv_gatk", "VQSR", "tmp.indel.recalibrated.vcf"),
         vqsr  = join(config['workdir'], "10.germline_snv_gatk", "Merge.flt.vqsr.vcf.gz"),
     params:
+        vqsrdir=join(config['workdir'], "10.germline_snv_gatk", "VQSR")
         mfinputs=lambda wildcards, input: " ".join("--input {} ".format(in_) for in_ in input.mfitvs),
         soinputs=lambda wildcards, input: " ".join("--input {} ".format(in_) for in_ in input.soitvs),
     log:
         out = join(config['pipelinedir'], "logs", "germline__genotyping.o"),
         err = join(config['pipelinedir'], "logs", "germline__genotyping.e"),
     threads:
-        int(allocated("threads", "germline__genotyping", cluster))
+        int(allocated("threads", "cpu8_large", cluster))
     container:
         config['container']['gatk']
     shell:
@@ -351,6 +354,7 @@ rule germline__genotyping:
           --truth-sensitivity-filter-level 99.7 \
           --create-output-variant-index true \
           -mode SNP >> {log.out} 2>> {log.err}
+        rm -rf {params.vqsrdir}
         """
 
 rule germline__peddy:
@@ -369,7 +373,7 @@ rule germline__peddy:
         folder = join(config['workdir'], "05.peddy", "{sample}"),
         prefix = "{sample}",
     threads:
-        int(allocated("threads", "germline__peddy", cluster))
+        int(allocated("threads", "cpu8", cluster))
     container:
         config['container']['peddy']
     shell:
@@ -397,7 +401,7 @@ rule germline__strelka:
         out = join(config['pipelinedir'], "logs", "germline__strelka", "{sample}.o"),
         err = join(config['pipelinedir'], "logs", "germline__strelka", "{sample}.e"),
     threads:
-        int(allocated("threads", "germline__strelka", cluster))
+        int(allocated("threads", "cpu32", cluster))
     container:
         config['container']['strelka']
     shell:
@@ -428,7 +432,7 @@ rule germline__manta:
         out = join(config['pipelinedir'], "logs", "germline__manta", "{sample}.o"),
         err = join(config['pipelinedir'], "logs", "germline__manta", "{sample}.e"),
     threads:
-        int(allocated("threads", "germline__manta", cluster))
+        int(allocated("threads", "cpu32", cluster))
     container:
         config['container']['manta']
     shell:
@@ -450,7 +454,7 @@ rule germline__tiddit:
     input:
         cram = join(config['workdir'], "01.cram", "{sample}", "{sample}.cram"),
     output:
-        vcf = join(config['workdir'], "14.germline_sv_tiddit", "{sample}", "{sample}.tiddit.vcf"),
+        vcf = temp(join(config['workdir'], "14.germline_sv_tiddit", "{sample}", "{sample}.tiddit.vcf")),
     params:
         dir    = join(config['workdir'], "14.germline_sv_tiddit", "{sample}"),
         prefix = join(config['workdir'], "14.germline_sv_tiddit", "{sample}", "{sample}.tiddit"),
@@ -471,7 +475,59 @@ rule germline__tiddit:
         "  --ref {config[references][gatkbundle]}/Homo_sapiens_assembly38.fasta"
         "  -o {params.prefix}"
         "  > {log.out} 2> {log.err}\n"
+        "rm -rf {params.prefix}_tiddit"
+        "  >> {log.out} 2>> {log.err}\n"
 
+rule germline__tiddit_annot:
+    input:
+        vcf = join(config['workdir'], "14.germline_sv_tiddit", "{sample}", "{sample}.tiddit.vcf"),
+        deepvariant = join( config['workdir'], "11.germline_snv_deepvariant", "{sample}", "{sample}.deepvariant.pass.vcf.gz" ),
+    output:
+        vcfgz = join(config['workdir'], "14.germline_sv_tiddit", "{sample}", "{sample}.tiddit.vcf.gz"),
+        vcfpgz = temp(join(config['workdir'], "14.germline_sv_tiddit", "{sample}", "{sample}.tiddit.pass.vcf.gz")),
+        annot = join(config['workdir'], "14.germline_sv_tiddit", "{sample}", "AnnotSV", "{sample}.tiddit.pass.tsv"),
+    params:
+        annotdir    = join(config['workdir'], "14.germline_sv_tiddit", "{sample}", "AnnotSV"),
+    log:
+        out = join(config['pipelinedir'], "logs", "germline__tiddit_annot", "{sample}.o"),
+        err = join(config['pipelinedir'], "logs", "germline__tiddit_annot", "{sample}.e"),
+    threads:
+        int(allocated("threads", "cpu4", cluster))
+    container:
+        config['container']['annotsv']
+    shell:
+        "bcftools view "
+        "   --threads {threads} "
+        "   -O z "
+        "   -o {output.vcfgz} "
+        "   -W "
+        "   {input.vcf} "
+        "  > {log.out} 2> {log.err}\n"
+        "bcftools view "
+        "   --threads {threads} "
+        "   -O z "
+        "   -o {output.vcfpgz} "
+        "   -W "
+        "   -f PASS"
+        "   {input.vcf} "
+        "  >> {log.out} 2>> {log.err}\n"
+        "AnnotSV "
+        "   -SVinputFile {output.vcfpgz} "
+        "   -annotationsDir {config[references][annotsv]} "
+        "   -bedtools bedtools "
+        "   -bcftools bcftools "
+        "   -annotationMode full "
+        "   -genomeBuild GRCh38 "
+        "   -includeCI 1 "
+        "   -overwrite 1 "
+        "   -outputFile {wildcards.sample}.tiddit.pass "
+        "   -outputDir {params.annotdir} "
+        "   -SVinputInfo 1 "
+        "   -SVminSize 50 "
+        "   -overlap 70 "
+        "   -snvIndelFiles {input.deepvariant} "
+        "   -snvIndelPASS 1 "
+        "  >> {log.out} 2>> {log.err}\n"
 
 rule germline__gridss_preprocess:
     input:
@@ -484,7 +540,7 @@ rule germline__gridss_preprocess:
         out = join(config['pipelinedir'], "logs", "germline__gridss_preprocess", "{sample}.o"),
         err = join(config['pipelinedir'], "logs", "germline__gridss_preprocess", "{sample}.e"),
     threads:
-        int(allocated("threads", "germline__gridss_preprocess", cluster))
+        int(allocated("threads", "cpu8", cluster))
     container:
         config['container']['gridss']
     shell:
@@ -517,7 +573,7 @@ rule germline__gridss_assemble:
         out = join(config['pipelinedir'], "logs", "germline__gridss_assemble", "{sample}.{shard}.o"),
         err = join(config['pipelinedir'], "logs", "germline__gridss_assemble", "{sample}.{shard}.e"),
     threads:
-        int(allocated("threads", "germline__gridss_assemble", cluster))
+        int(allocated("threads", "cpu16", cluster))
     container:
         config['container']['gridss']
     shell:
@@ -543,14 +599,17 @@ rule germline__gridss_call:
         ok =   lambda wildcards: [ join(config['workdir'], "15.germline_sv_gridss", "{sample}", "_gridss", "assemble_{shard}.ok".format(shard=i)) for i in range(config['parameter']['gridss_shards'])]
     output:
         bam = join(config['workdir'], "15.germline_sv_gridss", "{sample}", "{sample}.assemble.bam"),
-        vcf = join(config['workdir'], "15.germline_sv_gridss", "{sample}", "{sample}.gridss.vcf"),
+        vcf = temp(join(config['workdir'], "15.germline_sv_gridss", "{sample}", "{sample}.gridss.vcf")),
+        vcfi = temp(join(config['workdir'], "15.germline_sv_gridss", "{sample}", "{sample}.gridss.vcf.idx")),
+        vcfgz = join(config['workdir'], "15.germline_sv_gridss", "{sample}", "{sample}.gridss.vcf.gz"),
+        vcfpgz = join(config['workdir'], "15.germline_sv_gridss", "{sample}", "{sample}.gridss.pass.vcf.gz"),
     params:
         workspace = join(config['workdir'], "15.germline_sv_gridss", "{sample}", "_gridss"),
     log:
         out = join(config['pipelinedir'], "logs", "germline__gridss_call", "{sample}.o"),
         err = join(config['pipelinedir'], "logs", "germline__gridss_call", "{sample}.e"),
     threads:
-        int(allocated("threads", "germline__gridss_call", cluster))
+        int(allocated("threads", "cpu16", cluster))
     container:
         config['container']['gridss']
     shell:
@@ -563,19 +622,26 @@ rule germline__gridss_call:
         "  -w {params.workspace}"
         "  {input.cram}"
         "  > {log.out} 2> {log.err}\n"
+        "bcftools view -W -O z -o {output.vcfgz} {output.vcf}"
+        "  >> {log.out} 2>> {log.err}\n"
+        "bcftools view -W -O z -f PASS -o {output.vcfpgz} {output.vcf}"
+        "  >> {log.out} 2>> {log.err}\n"
+
 
 rule germline__gridss_virusbreakend:
     input:
         cram = join(config['workdir'], "01.cram", "{sample}", "{sample}.cram"),
     output:
-        vcf = join(config['workdir'], "16.germline_sv_virusbreakend", "{sample}", "{sample}.virusbreakend.vcf"),
+        vcf = temp(join(config['workdir'], "16.germline_sv_virusbreakend", "{sample}", "{sample}.virusbreakend.vcf")),
+        vcfgz = join(config['workdir'], "16.germline_sv_virusbreakend", "{sample}", "{sample}.virusbreakend.vcf.gz"),
+        vcfpgz = join(config['workdir'], "16.germline_sv_virusbreakend", "{sample}", "{sample}.virusbreakend.pass.vcf.gz"),
     params:
         dir = join(config['workdir'], "16.germline_sv_virusbreakend", "{sample}", "tmp"),
     log:
         out = join(config['pipelinedir'], "logs", "germline__gridss_virusbreakend", "{sample}.o"),
         err = join(config['pipelinedir'], "logs", "germline__gridss_virusbreakend", "{sample}.e"),
     threads:
-        int(allocated("threads", "germline__gridss_virusbreakend", cluster))
+        int(allocated("threads", "cpu32", cluster))
     container:
         config['container']['gridss']
     shell:
@@ -589,6 +655,10 @@ rule germline__gridss_virusbreakend:
         "  --db {config[references][virusbreakend]} "
         "  {input.cram}"
         "  > {log.out} 2> {log.err}\n"
+        "bcftools view -W -O z -o {output.vcfgz} {output.vcf}"
+        "  >> {log.out} 2>> {log.err}\n"
+        "bcftools view -W -O z -f PASS -o {output.vcfpgz} {output.vcf}"
+        "  >> {log.out} 2>> {log.err}\n"
         "cd .. \n"
         "rm -rf tmp"
 
@@ -603,7 +673,7 @@ rule germline__gripss_germline:
         out = join(config['pipelinedir'], "logs", "germline__gripss_germline", "{sample}.o"),
         err = join(config['pipelinedir'], "logs", "germline__gripss_germline", "{sample}.e"),
     threads:
-        int(allocated("threads", "germline__gripss_germline", cluster))
+        int(allocated("threads", "cpu8", cluster))
     container:
         config['container']['gripss']
     shell:
@@ -620,6 +690,42 @@ rule germline__gripss_germline:
         "  -output_dir {params.dir}"
         "  > {log.out} 2> {log.err}\n"
 
+
+rule germline__gridss_annot:
+    input:
+        vcf = join(config['workdir'], "15.germline_sv_gridss", "{sample}", "gripss_germline", "{sample}.gripss.filtered.vcf.gz"),
+        deepvariant = join( config['workdir'], "11.germline_snv_deepvariant", "{sample}", "{sample}.deepvariant.pass.vcf.gz" ),
+    output:
+        annot = join(config['workdir'], "15.germline_sv_gridss", "{sample}", "gripss_germline", "{sample}.gripss.filtered.vcf.gz", "AnnotSV", "{sample}.gripss.pass.tsv"),
+    params:
+        annotdir = join(config['workdir'], "15.germline_sv_gridss", "{sample}", "gripss_germline", "{sample}.gripss.filtered.vcf.gz", "AnnotSV"),
+    log:
+        out = join(config['pipelinedir'], "logs", "germline__gridss_annot", "{sample}.o"),
+        err = join(config['pipelinedir'], "logs", "germline__gridss_annot", "{sample}.e"),
+    threads:
+        int(allocated("threads", "cpu4", cluster))
+    container:
+        config['container']['annotsv']
+    shell:
+        "AnnotSV "
+        "   -SVinputFile {input.vcf} "
+        "   -annotationsDir {config[references][annotsv]} "
+        "   -bedtools bedtools "
+        "   -bcftools bcftools "
+        "   -annotationMode full "
+        "   -genomeBuild GRCh38 "
+        "   -includeCI 1 "
+        "   -overwrite 1 "
+        "   -outputFile {wildcards.sample}.gripss.pass "
+        "   -outputDir {params.annotdir} "
+        "   -SVinputInfo 1 "
+        "   -SVminSize 50 "
+        "   -overlap 70 "
+        "   -snvIndelFiles {input.deepvariant} "
+        "   -snvIndelPASS 1 "
+        "  > {log.out} 2> {log.err}\n"
+
+
 rule germline__canvas:
     input:
         bam    = join(config['workdir'], "02.bam", "{sample}", "{sample}.bam"),
@@ -634,7 +740,7 @@ rule germline__canvas:
         out = join(config['pipelinedir'], "logs", "germline__canvas", "{sample}.o"),
         err = join(config['pipelinedir'], "logs", "germline__canvas", "{sample}.e"),
     threads:
-        int(allocated("threads", "germline__canvas", cluster))
+        int(allocated("threads", "cpu8", cluster))
     container:
         config['container']['canvas']
     shell:
@@ -672,7 +778,7 @@ rule germline__melt_ins:
         out = join(config['pipelinedir'], "logs", "germline__melt_ins", "{sample}.o"),
         err = join(config['pipelinedir'], "logs", "germline__melt_ins", "{sample}.e"),
     threads:
-        int(allocated("threads", "germline__melt_ins", cluster))
+        int(allocated("threads", "cpu8_large", cluster))
     container:
         config['container']['melt']
     shell:
@@ -699,7 +805,7 @@ rule germline__melt_del1:
         out = join(config['pipelinedir'], "logs", "germline__melt_del1", "{sample}.o"),
         err = join(config['pipelinedir'], "logs", "germline__melt_del1", "{sample}.e"),
     threads:
-        int(allocated("threads", "germline__melt_del1", cluster))
+        int(allocated("threads", "cpu8_large", cluster))
     container:
         config['container']['melt']
     shell:
@@ -732,7 +838,7 @@ rule germline__melt_del2:
         out = join(config['pipelinedir'], "logs", "germline__melt_del2", "{sample}.o"),
         err = join(config['pipelinedir'], "logs", "germline__melt_del2", "{sample}.e"),
     threads:
-        int(allocated("threads", "germline__melt_del2", cluster))
+        int(allocated("threads", "cpu8_large", cluster))
     container:
         config['container']['melt']
     shell:
@@ -763,7 +869,7 @@ rule germline__msi_msisensorpro:
         out = join(config['pipelinedir'], "logs", "germline__msi_msisensorpro", "{sample}.o"),
         err = join(config['pipelinedir'], "logs", "germline__msi_msisensorpro", "{sample}.e"),
     threads:
-        int(allocated("threads", "germline__msi_msisensorpro", cluster))
+        int(allocated("threads", "cpu4", cluster))
     container:
         config['container']['msisensor-pro']
     shell:
@@ -792,7 +898,7 @@ rule germline__hlala:
         out = join(config['pipelinedir'], "logs", "germline__hlala", "{sample}.o"),
         err = join(config['pipelinedir'], "logs", "germline__hlala", "{sample}.e"),
     threads:
-        int(allocated("threads", "germline__hlala", cluster))
+        int(allocated("threads", "cpu8_large", cluster))
     shell:
         "singularity exec -B {params.bind} {params.sif} "
         "  HLA-LA.pl "

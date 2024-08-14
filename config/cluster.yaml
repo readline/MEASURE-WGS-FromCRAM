@@ -5,95 +5,82 @@ __default__:
     time: '2-00:00:00'
     extra: ' --gres=lscratch:20'
 
+cpu2:
+    partition: 'norm'
+    threads: 2
+    mem: '8g'
+    time: '2-00:00:00'
+    extra: ' --gres=lscratch:50'
+
+cpu4:
+    partition: 'norm'
+    threads: 4
+    mem: '16g'
+    time: '2-00:00:00'
+    extra: ' --gres=lscratch:50'
+
+cpu8:
+    partition: 'norm'
+    threads: 8
+    mem: '32g'
+    time: '2-00:00:00'
+    extra: ' --gres=lscratch:50'
+
+cpu16:
+    partition: 'norm'
+    threads: 16
+    mem: '64g'
+    time: '2-00:00:00'
+    extra: ' --gres=lscratch:50'
+
+cpu32:
+    partition: 'norm'
+    threads: 32
+    mem: '128g'
+    time: '2-00:00:00'
+    extra: ' --gres=lscratch:50'
+
+cpu2_large:
+    partition: 'norm'
+    threads: 2
+    mem: '16g'
+    time: '2-00:00:00'
+    extra: ' --gres=lscratch:50'
+
+cpu4_large:
+    partition: 'norm'
+    threads: 4
+    mem: '32g'
+    time: '2-00:00:00'
+    extra: ' --gres=lscratch:50'
+
+cpu8_large:
+    partition: 'norm'
+    threads: 8
+    mem: '64g'
+    time: '2-00:00:00'
+    extra: ' --gres=lscratch:50'
+
+cpu16_large:
+    partition: 'norm'
+    threads: 16
+    mem: '128g'
+    time: '2-00:00:00'
+    extra: ' --gres=lscratch:50'
+
+cpu32_large:
+    partition: 'norm'
+    threads: 32
+    mem: '256g'
+    time: '2-00:00:00'
+    extra: ' --gres=lscratch:50'
+
 vcf_compress:
     partition: 'norm'
     threads: 2
     mem: '4g'
     time: '1-00:00:00'
     extra: ' --gres=lscratch:20'
-
-cram__check_md5:
-    partition: 'norm'
-    threads: 8
-    mem: '16g'
-    time: '1-00:00:00'
-    extra: ' --gres=lscratch:20'
-
-merge_sample_cram:
-    partition: 'norm'
-    threads: 8
-    mem: '16g'
-    time: '1-00:00:00'
-    extra: ' --gres=lscratch:20'
-
-cram__to_bam:
-    partition: 'norm'
-    threads: 8
-    mem: '16g'
-    time: '2-00:00:00'
-    extra: ' --gres=lscratch:20'
-
-cram__to_chrm:
-    partition: 'norm'
-    threads: 8
-    mem: '16g'
-    time: '1-00:00:00'
-    extra: ' --gres=lscratch:20'
-
-cramqc__flagstat:
-    partition: 'norm'
-    threads: 8
-    mem: '16g'
-    time: '1-00:00:00'
-    extra: ' --gres=lscratch:20'
-
-cramqc__collect_quality_yield_metrics:
-    partition: 'norm'
-    threads: 2
-    mem: '8g'
-    time: '2-00:00:00'
-    extra: ' --gres=lscratch:20'
-
-cramqc__collect_wgs_metrics:
-    partition: 'norm'
-    threads: 2
-    mem: '8g'
-    time: '2-00:00:00'
-    extra: ' --gres=lscratch:20'
-
-cramqc__collect_all_reads_multiple_metrics:
-    partition: 'norm'
-    threads: 2
-    mem: '8g'
-    time: '2-00:00:00'
-    extra: ' --gres=lscratch:20'
-
-cramqc__collect_read_groups_multiple_metrics:
-    partition: 'norm'
-    threads: 2
-    mem: '8g'
-    time: '2-00:00:00'
-    extra: ' --gres=lscratch:20'
-
-cramqc__collect_aggregation_metrics:
-    partition: 'norm'
-    threads: 2
-    mem: '8g'
-    time: '2-00:00:00'
-    extra: ' --gres=lscratch:20'
-
-cramqc__mosdepth:
-    partition: 'norm'
-    threads: 8
-    mem: '16g'
-    time: '2-00:00:00'
-    extra: ' --gres=lscratch:50'
-
-cramqc__summary_metrics:
-    partition: 'norm'
-    threads: 2
-    mem: '4g'
-    time: '02:00:00'
 
 germline__deepvariant1:
     partition: 'norm'
@@ -116,108 +103,10 @@ germline__deepvariant3:
     time: '2-00:00:00'
     extra: " --gres=lscratch:40,gpu:1 --constraint='gpua100|gpuv100|gpuv100x'"
 
-germline__gatk_hcitv:
-    partition: 'norm'
-    threads: 4
-    mem: '36g'
-    time: '2-00:00:00'
-    extra: ' --gres=lscratch:50'
-
-germline__gatk_hcmerge:
-    partition: 'norm'
-    threads: 4
-    mem: '24g'
-    time: '2-00:00:00'
-    extra: ' --gres=lscratch:200'
-
-germline__gdbimport:
-    partition: 'norm'
-    threads: 4
-    mem: '16g'
-    time: '2-00:00:00'
-    extra: ' --gres=lscratch:40'
-
-germline__genotyping:
-    partition: 'norm'
-    threads: 8
-    mem: '64g'
-    time: '2-00:00:00'
-    extra: ' --gres=lscratch:100'
-
-germline__strelka:
-    partition: 'norm'
-    threads: 24
-    mem: '48g'
-    time: '2-00:00:00'
-    extra: ' --gres=lscratch:50'
-
-germline__manta:
-    partition: 'norm'
-    threads: 24
-    mem: '48g'
-    time: '2-00:00:00'
-    extra: ' --gres=lscratch:50'
-
-germline__gridss_preprocess:
-    partition: 'norm'
-    threads: 8
-    mem: '32g'
-    time: '2-00:00:00'
-    extra: ' --gres=lscratch:50'
-
-germline__gridss_assemble:
-    partition: 'norm'
-    threads: 8
-    mem: '48g'
-    time: '2-00:00:00'
-    extra: ' --gres=lscratch:50'
-
-germline__gridss_call:
-    partition: 'norm'
-    threads: 8
-    mem: '32g'
-    time: '2-00:00:00'
-    extra: ' --gres=lscratch:50'
-
-germline__gridss_virusbreakend:
-    partition: 'norm'
-    threads: 32
-    mem: '64g'
-    time: '2-00:00:00'
-    extra: ' --gres=lscratch:50'
-
-germline__gripss_germline:
-    partition: 'norm'
-    threads: 8
-    mem: '32g'
-    time: '2-00:00:00'
-    extra: ' --gres=lscratch:50'
-
 germline__tiddit:
     partition: 'norm'
     threads: 24
     mem: '192g'
-    time: '2-00:00:00'
-    extra: ' --gres=lscratch:50'
-
-germline__melt_ins:
-    partition: 'norm'
-    threads: 4
-    mem: '48g'
-    time: '2-00:00:00'
-    extra: ' --gres=lscratch:50'
-
-germline__melt_del1:
-    partition: 'norm'
-    threads: 4
-    mem: '48g'
-    time: '2-00:00:00'
-    extra: ' --gres=lscratch:50'
-
-germline__melt_del2:
-    partition: 'norm'
-    threads: 4
-    mem: '48g'
     time: '2-00:00:00'
     extra: ' --gres=lscratch:50'
 
