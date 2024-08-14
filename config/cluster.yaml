@@ -277,6 +277,13 @@ somatic_ss__dellysv:
     time: '2-00:00:00'
     extra: ' --gres=lscratch:50'
 
+somatic_ss__dellysv_int:
+    partition: 'largemem'
+    threads: 32
+    mem: '512g'
+    time: '2-00:00:00'
+    extra: ' --gres=lscratch:50'
+
 somatic_ss__vardict_split:
     partition: 'norm'
     threads: 16
@@ -395,9 +402,30 @@ somatic_tn__dellysv:
     time: '2-00:00:00'
     extra: ' --gres=lscratch:50'
 
-omatic_tn__dellysv2:
-    partition: 'norm'
+somatic_tn__dellysv2:
+    partition: 'largemem'
     threads: 32
-    mem: '128g'
+    mem: '1024g'
+    time: '2-00:00:00'
+    extra: ' --gres=lscratch:50'
+
+somatic_tn__amber:
+    partition: 'norm'
+    threads: 10
+    mem: '32g'
+    time: '2-00:00:00'
+    extra: ' --gres=lscratch:50'
+
+somatic_tn__cobalt:
+    partition: 'norm'
+    threads: 24
+    mem: '48g'
+    time: '2-00:00:00'
+    extra: ' --gres=lscratch:50'
+
+somatic_tn__purple:
+    partition: 'norm'
+    threads: 24
+    mem: '48g'
     time: '2-00:00:00'
     extra: ' --gres=lscratch:50'

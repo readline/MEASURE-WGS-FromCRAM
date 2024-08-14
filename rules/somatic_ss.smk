@@ -290,9 +290,8 @@ rule somatic_ss__dellysv:
     input:
         cram = join(config['workdir'], "01.cram", "{sample}", "{sample}.cram"),
     output:
-        vcfgz = join(config['workdir'], "45.somatic_ss_sv__delly", "{sample}", "{sample}.delly.vcf.gz"),
-    params:
-        vcf = join(config['workdir'], "45.somatic_ss_sv__delly", "{sample}", "{sample}.delly.vcf"),
+        bcf = join(config['workdir'], "45.somatic_ss_sv__delly", "{sample}", "{sample}.delly.bcf"),
+        vcf = join(config['workdir'], "45.somatic_ss_sv__delly", "{sample}", "{sample}.delly.vcf.gz"),
     log:
         out = join(config['pipelinedir'], "logs", "somatic_ss__dellysv", "{sample}.o"),
         err = join(config['pipelinedir'], "logs", "somatic_ss__dellysv", "{sample}.e"),
@@ -304,11 +303,70 @@ rule somatic_ss__dellysv:
         "delly call "
         "    -g {config[references][gatkbundle]}/Homo_sapiens_assembly38.fasta "
         "    -x {config[references][delly]}/human.hg38.excl.tsv "
-        "    {input.cram} |"
-        "bgzip > {output.vcfgz}"
-        "    2> {log.err}\n"
-        "tabix {output.vcfgz}"
-        "  > {log.out} 2>> {log.err}\n"
+        "    -o {output.bcf} "
+        "    {input.cram} "
+        "  > {log.out} 2> {log.err}\n"
+        "bcftools view {output.bcf} | bgzip > {output.vcf}"
+        "  2>> {log.err}\n"
+        "tabix -p vcf {output.vcf}"
+        "  >> {log.out} 2>> {log.err}\n"
+
+
+rule somatic_ss__dellysv_int:
+    input:
+        crams = lambda wildcards: 
+            ["{}/01.cram/{}/{}.cram".format(config['workdir'], sample, sample) for sample in tasks['somatic_ss']+[i[0] for i in tasks['somatic_paired']]]
+        bcfs = lambda wildcards: 
+            ["{}/45.somatic_ss_sv__delly/{}/{}.delly.bcf".format(config['workdir'], sample, sample) for sample in tasks['somatic_ss']+[i[0] for i in tasks['somatic_paired']]]
+    output:
+        bcf = join(config['workdir'], "36.somatic_tn_sv__delly", "MergedCalls", "Merge.delly.somatic.bcf"),
+        vcf = join(config['workdir'], "36.somatic_tn_sv__delly", "MergedCalls", "Merge.delly.somatic.vcf"),
+        gvcf = join(config['workdir'], "36.somatic_tn_sv__delly", "MergedCalls", "Merge.delly.gvcf"),
+    params:
+        genobcf = join(config['workdir'], "36.somatic_tn_sv__delly", "MergedCalls", "Merge.delly.geno.bcf"),
+        samplelist = join(config['workdir'], "36.somatic_tn_sv__delly", "{sample}", "sample.list"),
+    log:
+        out = join(config['pipelinedir'], "logs", "somatic_ss__dellysv_int", "{sample}.o"),
+        err = join(config['pipelinedir'], "logs", "somatic_ss__dellysv_int", "{sample}.e"),
+    threads:
+        int(allocated("threads", "somatic_ss__dellysv_int", cluster))
+    container:
+        config['container']['delly']
+    shell:
+        "ls {input.crams} | while read n; do\n"
+        "  echo $(samtools samples $n | cut -f1)'\ttumor'\n"
+        "done > sample.list \n"
+        "ls {config[references][pon]}/cram/*.cram | while read n; do\n"
+        "  echo $(samtools samples $n | cut -f1)'\tcontrol'\n"
+        "done >> sample.list \n"
+        "delly call "
+        "    -g {config[references][gatkbundle]}/Homo_sapiens_assembly38.fasta "
+        "    -v {input.prebcf} "
+        "    -o {params.genobcf} "
+        "    -x {config[references][delly]}/human.hg38.excl.tsv "
+        "    {input.crams} "
+        "    $(ls {config[references][pon]}/cram/*.cram)"
+        "  > {log.out} 2> {log.err}\n"
+        "delly filter "
+        "    -f somatic "
+        "    -o {output.bcf} "
+        "    -s {params.samplelist} "
+        "    {params.genobcf}"
+        "  >> {log.out} 2>> {log.err}\n"
+        "delly filter "
+        "    -f germline "
+        "    -o {output.bcf} "
+        "    -s {params.samplelist} "
+        "    {params.genobcf}"
+        "  >> {log.out} 2>> {log.err}\n"
+        "bcftools view {output.bcf} | bgzip > {output.vcf}"
+        "  2>> {log.err}\n"
+        "tabix -p vcf {output.vcf}"
+        "  >> {log.out} 2>> {log.err}\n"
+        "bcftools view {params.genobcf} | bgzip > {output.gvcf}"
+        "  2>> {log.err}\n"
+        "tabix -p vcf {output.gvcf}"
+        "  >> {log.out} 2>> {log.err}\n"
 
 rule somatic_ss__cnvkit:
     input:
