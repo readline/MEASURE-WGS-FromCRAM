@@ -85,7 +85,7 @@ rule all:
             sample=dic_sample_to_runs,
         ),
         expand(
-            join(config['workdir'], "15.germline_sv_gridss", "{sample}", "gripss_germline", "{sample}.gripss.filtered.vcf.gz"),
+            join(config['workdir'], "15.germline_sv_gridss", "{sample}", "gripss_germline", "{sample}.gripss.filtered.vcf.gz", "AnnotSV", "{sample}.gripss.pass.tsv"),
             sample=tasks['germline'],
         ),
         # expand(
@@ -131,7 +131,7 @@ rule all:
         #     sample=tasks['somatic_ss']+[i[0] for i in tasks['somatic_paired']],
         # ),
         # expand(
-        #     join(config['workdir'], "44.somatic_ss_sv__gridss", "{sample}", "{sample}.gripss.filtered.vcf.gz"),
+        #     join(config['workdir'], "44.somatic_ss_sv__gridss", "{sample}", "{sample}.gripss.filtered.vcf.gz", "AnnotSV", "{sample}.gripss.pass.tsv"),
         #     sample=tasks['somatic_ss'],
         # ),
         expand(

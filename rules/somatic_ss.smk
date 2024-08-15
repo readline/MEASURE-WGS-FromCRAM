@@ -286,6 +286,40 @@ rule somatic_ss__gripss:
         "  -output_dir {params.dir}"
         "  > {log.out} 2> {log.err}\n"
 
+rule somatic_ss__gridss_annot:
+    input:
+        vcf = join(config['workdir'], "44.somatic_ss_sv__gridss", "{sample}", "{sample}.gripss.filtered.vcf.gz"),
+        deepvariant = join( config['workdir'], "11.germline_snv_deepvariant", "{sample}", "{sample}.deepvariant.pass.vcf.gz" ),
+    output:
+        annot = join(config['workdir'], "44.somatic_ss_sv__gridss", "{sample}", "{sample}.gripss.filtered.vcf.gz", "AnnotSV", "{sample}.gripss.pass.tsv"),
+    params:
+        annotdir = join(config['workdir'], "44.somatic_ss_sv__gridss", "{sample}", "{sample}.gripss.filtered.vcf.gz", "AnnotSV"),
+    log:
+        out = join(config['pipelinedir'], "logs", "somatic_ss__gridss_annot", "{sample}.o"),
+        err = join(config['pipelinedir'], "logs", "somatic_ss__gridss_annot", "{sample}.e"),
+    threads:
+        int(allocated("threads", "cpu4", cluster))
+    container:
+        config['container']['annotsv']
+    shell:
+        "AnnotSV "
+        "   -SVinputFile {input.vcf} "
+        "   -annotationsDir {config[references][annotsv]} "
+        "   -bedtools bedtools "
+        "   -bcftools bcftools "
+        "   -annotationMode full "
+        "   -genomeBuild GRCh38 "
+        "   -includeCI 1 "
+        "   -overwrite 1 "
+        "   -outputFile {wildcards.sample}.gripss.pass "
+        "   -outputDir {params.annotdir} "
+        "   -SVinputInfo 1 "
+        "   -SVminSize 50 "
+        "   -overlap 70 "
+        "   -snvIndelFiles {input.deepvariant} "
+        "   -snvIndelPASS 1 "
+        "  > {log.out} 2> {log.err}\n"
+
 rule somatic_ss__dellysv:
     input:
         cram = join(config['workdir'], "01.cram", "{sample}", "{sample}.cram"),
