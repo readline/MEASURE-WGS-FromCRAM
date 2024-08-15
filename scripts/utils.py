@@ -85,6 +85,7 @@ def allocated(resource, rule, lookup, default="__default__"):
         allocation = lookup[rule][resource]
     except KeyError:
         # Use default allocation information
+        print('Cannot find rule %s allocated %s, use __default__.'%(rule, resource))
         allocation = lookup[default][resource]
     
     return allocation
