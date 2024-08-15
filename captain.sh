@@ -10,14 +10,13 @@
 set -euo pipefail
 
 current_hostname=$(hostname)
-module load snakemake singularity
 
 # Check hostname to avoid running snakemake in the biowulf login node
 if [ "$current_hostname" == "biowulf.nih.gov" ]; then
     echo "Current hostname is biowulf.nih.gov. Stopping the script."
     exit 1
 else
-    module load snakemake
+    module load snakemake singularity
 fi
 
 uid=$(uuidgen|cut -d '-' -f1)
