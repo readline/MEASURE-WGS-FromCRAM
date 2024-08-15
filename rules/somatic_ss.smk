@@ -325,7 +325,7 @@ rule somatic_ss__dellysv:
         cram = join(config['workdir'], "01.cram", "{sample}", "{sample}.cram"),
     output:
         bcf = join(config['workdir'], "45.somatic_ss_sv__delly", "{sample}", "{sample}.delly.bcf"),
-        vcf = join(config['workdir'], "45.somatic_ss_sv__delly", "{sample}", "{sample}.delly.vcf.gz"),
+        vcfgz = join(config['workdir'], "45.somatic_ss_sv__delly", "{sample}", "{sample}.delly.vcf.gz"),
     log:
         out = join(config['pipelinedir'], "logs", "somatic_ss__dellysv", "{sample}.o"),
         err = join(config['pipelinedir'], "logs", "somatic_ss__dellysv", "{sample}.e"),
@@ -340,11 +340,8 @@ rule somatic_ss__dellysv:
         "    -o {output.bcf} "
         "    {input.cram} "
         "  > {log.out} 2> {log.err}\n"
-        "bcftools view {output.bcf} | bgzip > {output.vcf}"
-        "  2>> {log.err}\n"
-        "tabix -p vcf {output.vcf}"
+        "bcftools view -O z -W -o {output.vcfgz} {output.bcf}"
         "  >> {log.out} 2>> {log.err}\n"
-
 
 rule somatic_ss__dellysv_joint:
     input:
@@ -361,7 +358,7 @@ rule somatic_ss__dellysv_joint:
         out = join(config['pipelinedir'], "logs", "somatic_ss__dellysv_int", "Merge.o"),
         err = join(config['pipelinedir'], "logs", "somatic_ss__dellysv_int", "Merge.e"),
     threads:
-        int(allocated("threads", "somatic_ss__dellysv_int", cluster))
+        int(allocated("threads", "somatic_ss__dellysv_joint", cluster))
     container:
         config['container']['delly']
     shell:
@@ -421,18 +418,63 @@ rule somatic_ss__dellysv_post:
         "    -s sample.list "
         "    {input.genobcf}"
         "  >> {log.out} 2>> {log.err}\n"
-        "bcftools view -O z -o {output.vcf} {output.bcf}"
-        "  2>> {log.err}\n"
-        "tabix -p vcf {output.vcf}"
+        "bcftools view -O z -W -o {output.vcf} {output.bcf}"
         "  >> {log.out} 2>> {log.err}\n"
-        "bcftools view -O z -o {output.vcfg} {output.bcfg}"
-        "  2>> {log.err}\n"
-        "tabix -p vcf {output.vcfg}"
+        "bcftools view -O z -W -o {output.vcfg} {output.bcfg}"
         "  >> {log.out} 2>> {log.err}\n"
-        "bcftools view -O z -o {output.gvcf} {input.genobcf}"
-        "  2>> {log.err}\n"
-        "tabix -p vcf {output.gvcf}"
+        "bcftools view -O z -W -o {output.gvcf} {input.genobcf}"
         "  >> {log.out} 2>> {log.err}\n"
+
+rule somatic_ss__dellysv_annot:
+    input:
+        vcf = join(config['workdir'], "45.somatic_ss_sv__delly", "JointCalls", "Merge.delly.somatic.vcf.gz"),
+        vcfg = join(config['workdir'], "45.somatic_ss_sv__delly", "JointCalls", "Merge.delly.germline.vcf.gz"),
+    output:
+        annot = join(config['workdir'], "45.somatic_ss_sv__delly", "JointCalls",  "AnnotSV", "Merge.delly.somatic.tsv"),
+        annotg = join(config['workdir'], "45.somatic_ss_sv__delly", "JointCalls",  "AnnotSV", "Merge.delly.germline.tsv"),
+    params:
+        annotdir = join(config['workdir'], "45.somatic_ss_sv__delly", "JointCalls",  "AnnotSV"),
+        annotfile1= "Merge.delly.somatic"
+        annotfile2= "Merge.delly.germline"
+    log:
+        out = join(config['pipelinedir'], "logs", "somatic_ss__dellysv_annot", "{sample}.o"),
+        err = join(config['pipelinedir'], "logs", "somatic_ss__dellysv_annot", "{sample}.e"),
+    threads:
+        int(allocated("threads", "cpu4", cluster))
+    container:
+        config['container']['annotsv']
+    shell:
+        "AnnotSV "
+        "   -SVinputFile {input.vcf} "
+        "   -annotationsDir {config[references][annotsv]} "
+        "   -bedtools bedtools "
+        "   -bcftools bcftools "
+        "   -annotationMode full "
+        "   -genomeBuild GRCh38 "
+        "   -includeCI 1 "
+        "   -overwrite 1 "
+        "   -outputFile {params.annotfile1} "
+        "   -outputDir {params.annotdir} "
+        "   -SVinputInfo 1 "
+        "   -SVminSize 50 "
+        "   -overlap 70 "
+        "  > {log.out} 2> {log.err}\n"
+        "AnnotSV "
+        "   -SVinputFile {input.vcfg} "
+        "   -annotationsDir {config[references][annotsv]} "
+        "   -bedtools bedtools "
+        "   -bcftools bcftools "
+        "   -annotationMode full "
+        "   -genomeBuild GRCh38 "
+        "   -includeCI 1 "
+        "   -overwrite 1 "
+        "   -outputFile {params.annotfile2} "
+        "   -outputDir {params.annotdir} "
+        "   -SVinputInfo 1 "
+        "   -SVminSize 50 "
+        "   -overlap 70 "
+        "  >> {log.out} 2>> {log.err}\n"
+
 
 rule somatic_ss__cnvkit:
     input:
