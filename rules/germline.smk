@@ -147,7 +147,7 @@ rule germline__gatk_hcmerge:
         gvcf = generate_germline__gatk_hcmerge_input_gvcf,
         bam  = generate_germline__gatk_hcmerge_input_bam,
     params:
-        itvsdir=join(config['workdir'], "10.germline_snv_gatk", "{sample}", "itvs")
+        itvsdir=join(config['workdir'], "10.germline_snv_gatk", "{sample}", "itvs"),
         tmpbam="/lscratch/$SLURM_JOB_ID/{sample}.vcf.bamout.bam",
         inputvcfs=lambda wildcards, input: " ".join("-I {} ".format(in_) for in_ in input.gvcf),
         inputbams=lambda wildcards, input: " ".join(" {} ".format(in_) for in_ in input.bam),
@@ -258,7 +258,7 @@ rule germline__genotyping:
         mirv  = join(config['workdir'], "10.germline_snv_gatk", "VQSR", "tmp.indel.recalibrated.vcf"),
         vqsr  = join(config['workdir'], "10.germline_snv_gatk", "Merge.flt.vqsr.vcf.gz"),
     params:
-        vqsrdir=join(config['workdir'], "10.germline_snv_gatk", "VQSR")
+        vqsrdir=join(config['workdir'], "10.germline_snv_gatk", "VQSR"),
         mfinputs=lambda wildcards, input: " ".join("--input {} ".format(in_) for in_ in input.mfitvs),
         soinputs=lambda wildcards, input: " ".join("--input {} ".format(in_) for in_ in input.soitvs),
     log:
@@ -696,9 +696,9 @@ rule germline__gridss_annot:
         vcf = join(config['workdir'], "15.germline_sv_gridss", "{sample}", "gripss_germline", "{sample}.gripss.filtered.vcf.gz"),
         deepvariant = join( config['workdir'], "11.germline_snv_deepvariant", "{sample}", "{sample}.deepvariant.pass.vcf.gz" ),
     output:
-        annot = join(config['workdir'], "15.germline_sv_gridss", "{sample}", "gripss_germline", "{sample}.gripss.filtered.vcf.gz", "AnnotSV", "{sample}.gripss.pass.tsv"),
+        annot = join(config['workdir'], "15.germline_sv_gridss", "{sample}", "gripss_germline", "AnnotSV", "{sample}.gripss.pass.tsv"),
     params:
-        annotdir = join(config['workdir'], "15.germline_sv_gridss", "{sample}", "gripss_germline", "{sample}.gripss.filtered.vcf.gz", "AnnotSV"),
+        annotdir = join(config['workdir'], "15.germline_sv_gridss", "{sample}", "gripss_germline", "AnnotSV"),
     log:
         out = join(config['pipelinedir'], "logs", "germline__gridss_annot", "{sample}.o"),
         err = join(config['pipelinedir'], "logs", "germline__gridss_annot", "{sample}.e"),

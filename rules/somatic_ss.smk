@@ -291,9 +291,9 @@ rule somatic_ss__gridss_annot:
         vcf = join(config['workdir'], "44.somatic_ss_sv__gridss", "{sample}", "{sample}.gripss.filtered.vcf.gz"),
         deepvariant = join( config['workdir'], "11.germline_snv_deepvariant", "{sample}", "{sample}.deepvariant.pass.vcf.gz" ),
     output:
-        annot = join(config['workdir'], "44.somatic_ss_sv__gridss", "{sample}", "{sample}.gripss.filtered.vcf.gz", "AnnotSV", "{sample}.gripss.pass.tsv"),
+        annot = join(config['workdir'], "44.somatic_ss_sv__gridss", "{sample}", "AnnotSV", "{sample}.gripss.pass.tsv"),
     params:
-        annotdir = join(config['workdir'], "44.somatic_ss_sv__gridss", "{sample}", "{sample}.gripss.filtered.vcf.gz", "AnnotSV"),
+        annotdir = join(config['workdir'], "44.somatic_ss_sv__gridss", "{sample}", "AnnotSV"),
     log:
         out = join(config['pipelinedir'], "logs", "somatic_ss__gridss_annot", "{sample}.o"),
         err = join(config['pipelinedir'], "logs", "somatic_ss__gridss_annot", "{sample}.e"),
@@ -434,11 +434,11 @@ rule somatic_ss__dellysv_annot:
         annotg = join(config['workdir'], "45.somatic_ss_sv__delly", "JointCalls",  "AnnotSV", "Merge.delly.germline.tsv"),
     params:
         annotdir = join(config['workdir'], "45.somatic_ss_sv__delly", "JointCalls",  "AnnotSV"),
-        annotfile1= "Merge.delly.somatic"
-        annotfile2= "Merge.delly.germline"
+        annotfile1= "Merge.delly.somatic",
+        annotfile2= "Merge.delly.germline",
     log:
-        out = join(config['pipelinedir'], "logs", "somatic_ss__dellysv_annot", "{sample}.o"),
-        err = join(config['pipelinedir'], "logs", "somatic_ss__dellysv_annot", "{sample}.e"),
+        out = join(config['pipelinedir'], "logs", "somatic_ss__dellysv_annot", "AnnotSV.o"),
+        err = join(config['pipelinedir'], "logs", "somatic_ss__dellysv_annot", "AnnotSV.e"),
     threads:
         int(allocated("threads", "cpu4", cluster))
     container:
@@ -650,7 +650,7 @@ rule somatic_ss__canvas_annot:
         annot = join(config['workdir'], "48.somatic_ss_cnv__canvas", "{sample}", "AnnotSV", "Canvas.CNV.pass.tsv"),
     params:
         annotdir = join(config['workdir'], "48.somatic_ss_cnv__canvas", "{sample}", "AnnotSV"),
-        annotfile1= "Canvas.CNV.pass"
+        annotfile1= "Canvas.CNV.pass",
     log:
         out = join(config['pipelinedir'], "logs", "somatic_ss__canvas_annot", "{sample}.o"),
         err = join(config['pipelinedir'], "logs", "somatic_ss__canvas_annot", "{sample}.e"),
