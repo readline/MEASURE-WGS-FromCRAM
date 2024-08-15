@@ -659,8 +659,9 @@ rule somatic_ss__canvas_annot:
     container:
         config['container']['annotsv']
     shell:
+        "bcftools view -O z -W -f PASS -o {output.vcfp} {input.vcf}"
         "AnnotSV "
-        "   -SVinputFile {input.vcf} "
+        "   -SVinputFile {output.vcfp} "
         "   -annotationsDir {config[references][annotsv]} "
         "   -bedtools bedtools "
         "   -bcftools bcftools "
