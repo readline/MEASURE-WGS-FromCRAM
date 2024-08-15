@@ -18,7 +18,7 @@ rule somatic_tn__mutect2_split:
         out = join(config['pipelinedir'], "logs", "somatic_tn__mutect2_split", "{sample}.{chr}.o"),
         err = join(config['pipelinedir'], "logs", "somatic_tn__mutect2_split", "{sample}.{chr}.e"),
     threads:
-        int(allocated("threads", "somatic_tn__mutect2_split", cluster))
+        int(allocated("threads", "cpu4_large", cluster))
     container:
         config['container']['gatk']
     shell:
@@ -78,7 +78,7 @@ rule somatic_tn__mutect2_merge:
         out = join(config['pipelinedir'], "logs", "somatic_tn__mutect2_merge", "{sample}.o"),
         err = join(config['pipelinedir'], "logs", "somatic_tn__mutect2_merge", "{sample}.e"),
     threads:
-        int(allocated("threads", "somatic_tn__mutect2_merge", cluster))
+        int(allocated("threads", "cpu4_large", cluster))
     container:
         config['container']['gatk']
     shell:
@@ -106,8 +106,8 @@ rule somatic_tn__mutect2_merge:
         "    >> {log.out} 2>> {log.err}\n"
         "tabix -p vcf {output.vcf} "
         "    >> {log.out} 2>> {log.err}\n"
-        # "rm -rf {params.dir}/chroms"
-        # "    >> {log.out} 2>> {log.err}\n"
+        "rm -rf {params.dir}/chroms"
+        "    >> {log.out} 2>> {log.err}\n"
 
 rule somatic_tn__strelka:
     input:
@@ -122,7 +122,7 @@ rule somatic_tn__strelka:
         out = join(config['pipelinedir'], "logs", "somatic_tn__strelka", "{sample}.o"),
         err = join(config['pipelinedir'], "logs", "somatic_tn__strelka", "{sample}.e"),
     threads:
-        int(allocated("threads", "somatic_tn__strelka", cluster))
+        int(allocated("threads", "cpu32", cluster))
     container:
         config['container']['strelka']
     shell:
@@ -156,7 +156,7 @@ rule somatic_tn__manta:
         out = join(config['pipelinedir'], "logs", "somatic_tn__manta", "{sample}.o"),
         err = join(config['pipelinedir'], "logs", "somatic_tn__manta", "{sample}.e"),
     threads:
-        int(allocated("threads", "somatic_tn__manta", cluster))
+        int(allocated("threads", "cpu32", cluster))
     container:
         config['container']['manta']
     shell:
@@ -188,7 +188,7 @@ rule somatic_tn__muse:
         out = join(config['pipelinedir'], "logs", "somatic_tn__muse", "{sample}.o"),
         err = join(config['pipelinedir'], "logs", "somatic_tn__muse", "{sample}.e"),
     threads:
-        int(allocated("threads", "somatic_tn__muse", cluster))
+        int(allocated("threads", "cpu32", cluster))
     container:
         config['container']['muse']
     shell:
@@ -227,7 +227,7 @@ rule somatic_tn__muse_post:
         out = join(config['pipelinedir'], "logs", "somatic_tn__muse_post", "{sample}.o"),
         err = join(config['pipelinedir'], "logs", "somatic_tn__muse_post", "{sample}.e"),
     threads:
-        int(allocated("threads", "somatic_tn__muse_post", cluster))
+        int(allocated("threads", "cpu4", cluster))
     container:
         config['container']['gatk']
     shell:
@@ -265,7 +265,7 @@ rule somatic_tn_gridss_prep:
         out = join(config['pipelinedir'], "logs", "somatic_tn_gridss_prep", "{sample}.o"),
         err = join(config['pipelinedir'], "logs", "somatic_tn_gridss_prep", "{sample}.e"),
     threads:
-        int(allocated("threads", "somatic_tn_gridss_prep", cluster))
+        int(allocated("threads", "cpu2", cluster))
     shell:
         "cd {params.workspace} \n"
         "rm -rf * \n"
@@ -289,7 +289,7 @@ rule somatic_tn__gridss_assemble_shards:
         out = join(config['pipelinedir'], "logs", "somatic_tn__gridss_assemble_shards", "{sample}.{shard}.o"),
         err = join(config['pipelinedir'], "logs", "somatic_tn__gridss_assemble_shards", "{sample}.{shard}.e"),
     threads:
-        int(allocated("threads", "somatic_tn__gridss_assemble_shards", cluster))
+        int(allocated("threads", "cpu32", cluster))
     container:
         config['container']['gridss']
     shell:
@@ -326,7 +326,7 @@ rule somatic_tn__gridss_call:
         out = join(config['pipelinedir'], "logs", "somatic_tn__gridss_call", "{sample}.o"),
         err = join(config['pipelinedir'], "logs", "somatic_tn__gridss_call", "{sample}.e"),
     threads:
-        int(allocated("threads", "somatic_tn__gridss_call", cluster))
+        int(allocated("threads", "cpu32", cluster))
     container:
         config['container']['gridss']
     shell:
@@ -354,7 +354,7 @@ rule somatic_tn__gripss:
         out = join(config['pipelinedir'], "logs", "somatic_ss__gripss", "{sample}.o"),
         err = join(config['pipelinedir'], "logs", "somatic_ss__gripss", "{sample}.e"),
     threads:
-        int(allocated("threads", "somatic_ss__gripss", cluster))
+        int(allocated("threads", "cpu16", cluster))
     container:
         config['container']['gripss']
     shell:
@@ -389,7 +389,7 @@ rule somatic_tn__dellysv:
         out = join(config['pipelinedir'], "logs", "somatic_tn__dellysv", "{sample}.o"),
         err = join(config['pipelinedir'], "logs", "somatic_tn__dellysv", "{sample}.e"),
     threads:
-        int(allocated("threads", "somatic_tn__dellysv", cluster))
+        int(allocated("threads", "cpu16", cluster))
     container:
         config['container']['delly']
     shell:
@@ -474,7 +474,7 @@ rule somatic_tn__dellysv_post:
         out = join(config['pipelinedir'], "logs", "somatic_tn__dellysv_post", "Post.o"),
         err = join(config['pipelinedir'], "logs", "somatic_tn__dellysv_post", "Post.e"),
     threads:
-        int(allocated("threads", "somatic_tn__dellysv_post", cluster))
+        int(allocated("threads", "cpu4", cluster))
     container:
         config['container']['delly']
     shell:
@@ -517,7 +517,7 @@ rule somatic_tn__amber:
         out = join(config['pipelinedir'], "logs", "somatic_tn__amber", "{sample}.o"),
         err = join(config['pipelinedir'], "logs", "somatic_tn__amber", "{sample}.e"),
     threads:
-        int(allocated("threads", "somatic_tn__amber", cluster))
+        int(allocated("threads", "cpu16", cluster))
     container:
         config['container']['amber']
     shell:
@@ -549,7 +549,7 @@ rule somatic_tn__cobalt:
         out = join(config['pipelinedir'], "logs", "somatic_tn__cobalt", "{sample}.o"),
         err = join(config['pipelinedir'], "logs", "somatic_tn__cobalt", "{sample}.e"),
     threads:
-        int(allocated("threads", "somatic_tn__cobalt", cluster))
+        int(allocated("threads", "cpu16", cluster))
     container:
         config['container']['cobalt']
     shell:
@@ -584,7 +584,7 @@ rule somatic_tn__purple:
         out = join(config['pipelinedir'], "logs", "somatic_tn__purple", "{sample}.o"),
         err = join(config['pipelinedir'], "logs", "somatic_tn__purple", "{sample}.e"),
     threads:
-        int(allocated("threads", "somatic_tn__purple", cluster))
+        int(allocated("threads", "cpu16", cluster))
     container:
         config['container']['purple']
     shell:

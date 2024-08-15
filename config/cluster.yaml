@@ -117,105 +117,10 @@ somatic_ss__dellysv_joint:
     time: '2-00:00:00'
     extra: ' --gres=lscratch:50 --constraint=e7543'
 
-somatic_tn__mutect2_split:
-    partition: 'norm'
-    threads: 4
-    mem: '32g'
-    time: '2-00:00:00'
-    extra: ' --gres=lscratch:50'
-
-somatic_tn__mutect2_merge:
-    partition: 'norm'
-    threads: 4
-    mem: '32g'
-    time: '2-00:00:00'
-    extra: ' --gres=lscratch:50'
-
-somatic_tn__strelka:
-    partition: 'norm'
-    threads: 24
-    mem: '48g'
-    time: '2-00:00:00'
-    extra: ' --gres=lscratch:50'
-
-somatic_tn__manta:
-    partition: 'norm'
-    threads: 24
-    mem: '48g'
-    time: '2-00:00:00'
-    extra: ' --gres=lscratch:50'
-
-somatic_tn__muse:
-    partition: 'norm'
-    threads: 32
-    mem: '64g'
-    time: '2-00:00:00'
-    extra: ' --gres=lscratch:50'
-
-somatic_tn__gridss_assemble_shards:
-    partition: 'norm'
-    threads: 32
-    mem: '64g'
-    time: '2-00:00:00'
-    extra: ' --gres=lscratch:50'
-
-somatic_tn__gridss_call:
-    partition: 'norm'
-    threads: 32
-    mem: '96g'
-    time: '2-00:00:00'
-    extra: ' --gres=lscratch:50'
-
-somatic_tn__muse_post:
-    partition: 'norm'
-    threads: 32
-    mem: '96g'
-
-somatic_tn__gripss:
-    partition: 'norm'
-    threads: 32
-    mem: '64g'
-    time: '2-00:00:00'
-    extra: ' --gres=lscratch:50'
-
-somatic_tn__dellysv:
-    partition: 'norm'
-    threads: 16
-    mem: '72g'
-    time: '2-00:00:00'
-    extra: ' --gres=lscratch:50'
-
 somatic_tn__dellysv_joint:
     partition: 'norm'
     threads: 32
     mem: '192g'
     time: '2-00:00:00'
     extra: ' --gres=lscratch:50 --constraint=e7543'
-
-somatic_tn__dellysv_post:
-    partition: 'norm'
-    threads: 16
-    mem: '72g'
-    time: '2-00:00:00'
-    extra: ' --gres=lscratch:50'
     
-somatic_tn__amber:
-    partition: 'norm'
-    threads: 10
-    mem: '32g'
-    time: '2-00:00:00'
-    extra: ' --gres=lscratch:50'
-
-somatic_tn__cobalt:
-    partition: 'norm'
-    threads: 24
-    mem: '48g'
-    time: '2-00:00:00'
-    extra: ' --gres=lscratch:50'
-
-somatic_tn__purple:
-    partition: 'norm'
-    threads: 24
-    mem: '48g'
-    time: '2-00:00:00'
-    extra: ' --gres=lscratch:50'
