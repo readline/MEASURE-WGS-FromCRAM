@@ -16,7 +16,7 @@ rule somatic_ss__mutect2_split:
         out = join(config['pipelinedir'], "logs", "somatic_ss__mutect2_split", "{sample}.{chr}.o"),
         err = join(config['pipelinedir'], "logs", "somatic_ss__mutect2_split", "{sample}.{chr}.e"),
     threads:
-        int(allocated("threads", "somatic_ss__mutect2_split", cluster))
+        int(allocated("threads", "cpu4_large", cluster))
     container:
         config['container']['gatk']
     shell:
@@ -68,7 +68,7 @@ rule somatic_ss__mutect2_merge:
         out = join(config['pipelinedir'], "logs", "somatic_ss__mutect2_merge", "{sample}.o"),
         err = join(config['pipelinedir'], "logs", "somatic_ss__mutect2_merge", "{sample}.e"),
     threads:
-        int(allocated("threads", "somatic_ss__mutect2_merge", cluster))
+        int(allocated("threads", "cpu4_large", cluster))
     container:
         config['container']['gatk']
     shell:
@@ -95,8 +95,8 @@ rule somatic_ss__mutect2_merge:
         "    >> {log.out} 2>> {log.err}\n"
         "tabix -p vcf {output.vcf} "
         "    >> {log.out} 2>> {log.err}\n"
-        # "rm -rf {params.dir}/chroms"
-        # "    >> {log.out} 2>> {log.err}\n"
+        "rm -rf {params.dir}/chroms"
+        "    >> {log.out} 2>> {log.err}\n"
 
 
 rule somatic_ss__octopus_split:

@@ -110,34 +110,6 @@ germline__tiddit:
     time: '2-00:00:00'
     extra: ' --gres=lscratch:50'
 
-germline__msi_msisensorpro:
-    partition: 'norm'
-    threads: 4
-    mem: '16g'
-    time: '2-00:00:00'
-    extra: ' --gres=lscratch:50'
-
-germline__hlala:
-    partition: 'norm'
-    threads: 4
-    mem: '48g'
-    time: '2-00:00:00'
-    extra: ' --gres=lscratch:50'
-
-somatic_ss__mutect2_split:
-    partition: 'norm'
-    threads: 4
-    mem: '32g'
-    time: '2-00:00:00'
-    extra: ' --gres=lscratch:50'
-
-somatic_ss__mutect2_merge:
-    partition: 'norm'
-    threads: 4
-    mem: '32g'
-    time: '2-00:00:00'
-    extra: ' --gres=lscratch:50'
-
 somatic_ss__octopus_split:
     partition: 'norm'
     threads: 32
