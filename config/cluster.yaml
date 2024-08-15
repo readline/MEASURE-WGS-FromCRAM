@@ -110,97 +110,12 @@ germline__tiddit:
     time: '2-00:00:00'
     extra: ' --gres=lscratch:50'
 
-somatic_ss__octopus_split:
-    partition: 'norm'
-    threads: 32
-    mem: '64g'
-    time: '2-00:00:00'
-    extra: ' --gres=lscratch:100'
-
-somatic_ss__octopus_merge:
-    partition: 'norm'
-    threads: 4
-    mem: '32g'
-    time: '2-00:00:00'
-    extra: ' --gres=lscratch:50'
-
-somatic_ss__gripss:
-    partition: 'norm'
-    threads: 16
-    mem: '36g'
-    time: '2-00:00:00'
-    extra: ' --gres=lscratch:50'
-
-somatic_ss__dellysv:
-    partition: 'norm'
-    threads: 16
-    mem: '36g'
-    time: '2-00:00:00'
-    extra: ' --gres=lscratch:50'
-
 somatic_ss__dellysv_joint:
     partition: 'norm'
     threads: 32
     mem: '192g'
     time: '2-00:00:00'
     extra: ' --gres=lscratch:50 --constraint=e7543'
-
-somatic_ss__dellysv_post:
-    partition: 'norm'
-    threads: 16
-    mem: '36g'
-    time: '2-00:00:00'
-    extra: ' --gres=lscratch:50'
-
-somatic_ss__vardict_split:
-    partition: 'norm'
-    threads: 16
-    mem: '128g'
-    time: '2-00:00:00'
-    extra: ' --gres=lscratch:50'
-
-somatic_ss__vardict_merge:
-    partition: 'norm'
-    threads: 4
-    mem: '32g'
-    time: '2-00:00:00'
-    extra: ' --gres=lscratch:50'
-
-somatic_ss__cnvkit:
-    partition: 'norm'
-    threads: 16
-    mem: '64g'
-    time: '2-00:00:00'
-    extra: ' --gres=lscratch:50'
-
-somatic_ss__amber:
-    partition: 'norm'
-    threads: 10
-    mem: '32g'
-    time: '2-00:00:00'
-    extra: ' --gres=lscratch:50'
-
-somatic_ss__cobalt:
-    partition: 'norm'
-    threads: 24
-    mem: '48g'
-    time: '2-00:00:00'
-    extra: ' --gres=lscratch:50'
-
-somatic_ss__purple:
-    partition: 'norm'
-    threads: 24
-    mem: '48g'
-    time: '2-00:00:00'
-    extra: ' --gres=lscratch:50'
-
-somatic_ss__canvas:
-    partition: 'norm'
-    threads: 24
-    mem: '64g'
-    time: '2-00:00:00'
-    extra: ' --gres=lscratch:50'
-
 
 somatic_tn__mutect2_split:
     partition: 'norm'
