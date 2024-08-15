@@ -125,7 +125,7 @@ rule germline__gatk_hcitv:
         out = join(config['pipelinedir'], "logs", "germline__gatk_hcitv", "{sample}.{itv}.o"),
         err = join(config['pipelinedir'], "logs", "germline__gatk_hcitv", "{sample}.{itv}.e"),
     threads:
-        int(allocated("threads", "cpu4_large", cluster))
+        int(allocated("threads", "germline__gatk_hcitv", cluster))
     container:
         config['container']['gatk']
     shell:
@@ -159,7 +159,7 @@ rule germline__gatk_hcmerge:
         out = join(config['pipelinedir'], "logs", "germline__gatk_hcmerge", "{sample}.o"),
         err = join(config['pipelinedir'], "logs", "germline__gatk_hcmerge", "{sample}.e"),
     threads:
-        int(allocated("threads", "cpu8_large", cluster))
+        int(allocated("threads", "germline__gatk_hcmerge", cluster))
     container:
         config['container']['gatk']
     shell:
@@ -206,7 +206,7 @@ rule germline__gdbimport:
         out = join(config['pipelinedir'], "logs", "germline__gdbimport", "itv_{itv}.o"),
         err = join(config['pipelinedir'], "logs", "germline__gdbimport", "itv_{itv}.e"),
     threads:
-        int(allocated("threads", "cpu8_large", cluster))
+        int(allocated("threads", "germline__gdbimport", cluster))
     container:
         config['container']['gatk']
     shell:
@@ -265,7 +265,7 @@ rule germline__genotyping:
         out = join(config['pipelinedir'], "logs", "germline__genotyping.o"),
         err = join(config['pipelinedir'], "logs", "germline__genotyping.e"),
     threads:
-        int(allocated("threads", "cpu8_large", cluster))
+        int(allocated("threads", "germline__genotyping", cluster))
     container:
         config['container']['gatk']
     shell:
@@ -373,7 +373,7 @@ rule germline__peddy:
         folder = join(config['workdir'], "05.peddy", "{sample}"),
         prefix = "{sample}",
     threads:
-        int(allocated("threads", "cpu8", cluster))
+        int(allocated("threads", "germline__peddy", cluster))
     container:
         config['container']['peddy']
     shell:
@@ -401,7 +401,7 @@ rule germline__strelka:
         out = join(config['pipelinedir'], "logs", "germline__strelka", "{sample}.o"),
         err = join(config['pipelinedir'], "logs", "germline__strelka", "{sample}.e"),
     threads:
-        int(allocated("threads", "cpu32", cluster))
+        int(allocated("threads", "germline__strelka", cluster))
     container:
         config['container']['strelka']
     shell:
@@ -432,7 +432,7 @@ rule germline__manta:
         out = join(config['pipelinedir'], "logs", "germline__manta", "{sample}.o"),
         err = join(config['pipelinedir'], "logs", "germline__manta", "{sample}.e"),
     threads:
-        int(allocated("threads", "cpu32", cluster))
+        int(allocated("threads", "germline__manta", cluster))
     container:
         config['container']['manta']
     shell:
@@ -492,7 +492,7 @@ rule germline__tiddit_annot:
         out = join(config['pipelinedir'], "logs", "germline__tiddit_annot", "{sample}.o"),
         err = join(config['pipelinedir'], "logs", "germline__tiddit_annot", "{sample}.e"),
     threads:
-        int(allocated("threads", "cpu4", cluster))
+        int(allocated("threads", "germline__tiddit_annot", cluster))
     container:
         config['container']['annotsv']
     shell:
@@ -540,7 +540,7 @@ rule germline__gridss_preprocess:
         out = join(config['pipelinedir'], "logs", "germline__gridss_preprocess", "{sample}.o"),
         err = join(config['pipelinedir'], "logs", "germline__gridss_preprocess", "{sample}.e"),
     threads:
-        int(allocated("threads", "cpu8", cluster))
+        int(allocated("threads", "germline__gridss_preprocess", cluster))
     container:
         config['container']['gridss']
     shell:
@@ -573,7 +573,7 @@ rule germline__gridss_assemble:
         out = join(config['pipelinedir'], "logs", "germline__gridss_assemble", "{sample}.{shard}.o"),
         err = join(config['pipelinedir'], "logs", "germline__gridss_assemble", "{sample}.{shard}.e"),
     threads:
-        int(allocated("threads", "cpu16", cluster))
+        int(allocated("threads", "germline__gridss_assemble", cluster))
     container:
         config['container']['gridss']
     shell:
@@ -609,7 +609,7 @@ rule germline__gridss_call:
         out = join(config['pipelinedir'], "logs", "germline__gridss_call", "{sample}.o"),
         err = join(config['pipelinedir'], "logs", "germline__gridss_call", "{sample}.e"),
     threads:
-        int(allocated("threads", "cpu16", cluster))
+        int(allocated("threads", "germline__gridss_call", cluster))
     container:
         config['container']['gridss']
     shell:
@@ -641,7 +641,7 @@ rule germline__gridss_virusbreakend:
         out = join(config['pipelinedir'], "logs", "germline__gridss_virusbreakend", "{sample}.o"),
         err = join(config['pipelinedir'], "logs", "germline__gridss_virusbreakend", "{sample}.e"),
     threads:
-        int(allocated("threads", "cpu32", cluster))
+        int(allocated("threads", "germline__gridss_virusbreakend", cluster))
     container:
         config['container']['gridss']
     shell:
@@ -673,7 +673,7 @@ rule germline__gripss_germline:
         out = join(config['pipelinedir'], "logs", "germline__gripss_germline", "{sample}.o"),
         err = join(config['pipelinedir'], "logs", "germline__gripss_germline", "{sample}.e"),
     threads:
-        int(allocated("threads", "cpu8", cluster))
+        int(allocated("threads", "germline__gripss_germline", cluster))
     container:
         config['container']['gripss']
     shell:
@@ -703,7 +703,7 @@ rule germline__gridss_annot:
         out = join(config['pipelinedir'], "logs", "germline__gridss_annot", "{sample}.o"),
         err = join(config['pipelinedir'], "logs", "germline__gridss_annot", "{sample}.e"),
     threads:
-        int(allocated("threads", "cpu4", cluster))
+        int(allocated("threads", "germline__gridss_annot", cluster))
     container:
         config['container']['annotsv']
     shell:
@@ -740,7 +740,7 @@ rule germline__canvas:
         out = join(config['pipelinedir'], "logs", "germline__canvas", "{sample}.o"),
         err = join(config['pipelinedir'], "logs", "germline__canvas", "{sample}.e"),
     threads:
-        int(allocated("threads", "cpu8", cluster))
+        int(allocated("threads", "germline__canvas", cluster))
     container:
         config['container']['canvas']
     shell:
@@ -778,7 +778,7 @@ rule germline__melt_ins:
         out = join(config['pipelinedir'], "logs", "germline__melt_ins", "{sample}.o"),
         err = join(config['pipelinedir'], "logs", "germline__melt_ins", "{sample}.e"),
     threads:
-        int(allocated("threads", "cpu8_large", cluster))
+        int(allocated("threads", "germline__melt_ins", cluster))
     container:
         config['container']['melt']
     shell:
@@ -805,7 +805,7 @@ rule germline__melt_del1:
         out = join(config['pipelinedir'], "logs", "germline__melt_del1", "{sample}.o"),
         err = join(config['pipelinedir'], "logs", "germline__melt_del1", "{sample}.e"),
     threads:
-        int(allocated("threads", "cpu8_large", cluster))
+        int(allocated("threads", "germline__melt_del1", cluster))
     container:
         config['container']['melt']
     shell:
@@ -838,7 +838,7 @@ rule germline__melt_del2:
         out = join(config['pipelinedir'], "logs", "germline__melt_del2", "{sample}.o"),
         err = join(config['pipelinedir'], "logs", "germline__melt_del2", "{sample}.e"),
     threads:
-        int(allocated("threads", "cpu8_large", cluster))
+        int(allocated("threads", "germline__melt_del2", cluster))
     container:
         config['container']['melt']
     shell:
@@ -869,7 +869,7 @@ rule germline__msi_msisensorpro:
         out = join(config['pipelinedir'], "logs", "germline__msi_msisensorpro", "{sample}.o"),
         err = join(config['pipelinedir'], "logs", "germline__msi_msisensorpro", "{sample}.e"),
     threads:
-        int(allocated("threads", "cpu4", cluster))
+        int(allocated("threads", "germline__msi_msisensorpro", cluster))
     container:
         config['container']['msisensor-pro']
     shell:
@@ -898,7 +898,7 @@ rule germline__hlala:
         out = join(config['pipelinedir'], "logs", "germline__hlala", "{sample}.o"),
         err = join(config['pipelinedir'], "logs", "germline__hlala", "{sample}.e"),
     threads:
-        int(allocated("threads", "cpu8_large", cluster))
+        int(allocated("threads", "germline__hlala", cluster))
     shell:
         "singularity exec -B {params.bind} {params.sif} "
         "  HLA-LA.pl "

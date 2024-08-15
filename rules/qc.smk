@@ -11,7 +11,7 @@ rule cramqc__flagstat:
     params:
         folder = join(config['workdir'], "01.cram", "{sample}", "QC", "Flagstat",),
     threads:
-        int(allocated("threads", "cpu8", cluster))
+        int(allocated("threads", "cramqc__flagstat", cluster))
     container:
         config['container']['samtools']
     shell:
@@ -29,7 +29,7 @@ rule cramqc__collect_quality_yield_metrics:
         out = join(config['pipelinedir'], "logs", "cramqc__collect_quality_yield_metrics", "{sample}.o"),
         err = join(config['pipelinedir'], "logs", "cramqc__collect_quality_yield_metrics", "{sample}.e"),
     threads:
-        int(allocated("threads", "cpu2", cluster))
+        int(allocated("threads", "cramqc__collect_quality_yield_metrics", cluster))
     container:
         config['container']['gatk']
     shell:
@@ -50,7 +50,7 @@ rule cramqc__collect_wgs_metrics:
         out = join(config['pipelinedir'], "logs", "cramqc__collect_wgs_metrics", "{sample}.o"),
         err = join(config['pipelinedir'], "logs", "cramqc__collect_wgs_metrics", "{sample}.e"),
     threads:
-        int(allocated("threads", "cpu2", cluster))
+        int(allocated("threads", "cramqc__collect_wgs_metrics", cluster))
     container:
         config['container']['gatk']
     shell:
@@ -78,7 +78,7 @@ rule cramqc__collect_all_reads_multiple_metrics:
         out = join(config['pipelinedir'], "logs", "cramqc__collect_all_reads_multiple_metrics", "{sample}.o"),
         err = join(config['pipelinedir'], "logs", "cramqc__collect_all_reads_multiple_metrics", "{sample}.e"),
     threads:
-        int(allocated("threads", "cpu2", cluster))
+        int(allocated("threads", "cramqc__collect_all_reads_multiple_metrics", cluster))
     container:
         config['container']['gatk']
     shell:
@@ -112,7 +112,7 @@ rule cramqc__collect_read_groups_multiple_metrics:
         out = join(config['pipelinedir'], "logs", "cramqc__collect_read_groups_multiple_metrics", "{sample}.o"),
         err = join(config['pipelinedir'], "logs", "cramqc__collect_read_groups_multiple_metrics", "{sample}.e"),
     threads:
-        int(allocated("threads", "cpu2", cluster))
+        int(allocated("threads", "cramqc__collect_read_groups_multiple_metrics", cluster))
     container:
         config['container']['gatk']
     shell:
@@ -146,7 +146,7 @@ rule cramqc__collect_aggregation_metrics:
         out = join(config['pipelinedir'], "logs", "cramqc__collect_aggregation_metrics", "{sample}.o"),
         err = join(config['pipelinedir'], "logs", "cramqc__collect_aggregation_metrics", "{sample}.e"),
     threads:
-        int(allocated("threads", "cpu2", cluster))
+        int(allocated("threads", "cramqc__collect_aggregation_metrics", cluster))
     container:
         config['container']['gatk']
     shell:
@@ -180,7 +180,7 @@ rule cramqc__mosdepth:
         out = join(config['pipelinedir'], "logs", "cramqc__mosdepth", "{sample}.o"),
         err = join(config['pipelinedir'], "logs", "cramqc__mosdepth", "{sample}.e"),
     threads:
-        int(allocated("threads", "cpu8", cluster))
+        int(allocated("threads", "cramqc__mosdepth", cluster))
     container:
         config['container']['mosdepth']
     shell:
@@ -213,6 +213,6 @@ rule cramqc__summary_metrics:
         out = join(config['pipelinedir'], "logs", "cramqc__summary_metrics", "{sample}.o"),
         err = join(config['pipelinedir'], "logs", "cramqc__summary_metrics", "{sample}.e"),
     threads:
-        int(allocated("threads", "cpu2", cluster))
+        int(allocated("threads", "cramqc__summary_metrics", cluster))
     shell:
         "touch {output.status}"

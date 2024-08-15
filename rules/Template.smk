@@ -29,7 +29,7 @@ rule fastqc:
     log: 
         out = snakedir + "/logs/A1.QC/{name}.o",
         err = snakedir + "/logs/A1.QC/{name}.e"
-    threads: int(allocated("threads", "fastqc_raw", cluster))
+    threads: int(allocated("threads", "fastqc", cluster))
     resources: 
         mem = '16g',
         extra = ' --gres=lscratch:20 '
