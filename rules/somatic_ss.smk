@@ -641,3 +641,38 @@ rule somatic_ss__canvas:
         "rm -rf ref TempCNV*"
         "    >> {log.out} 2>> {log.err}\n"
 
+rule somatic_ss__canvas_annot:
+    input:
+        vcf = join(config['workdir'], "48.somatic_ss_cnv__canvas", "{sample}", "CNV.vcf.gz"),
+        deepvariant = join( config['workdir'], "11.germline_snv_deepvariant", "{sample}", "{sample}.deepvariant.pass.vcf.gz" ),
+    output:
+        vcfp = join(config['workdir'], "48.somatic_ss_cnv__canvas", "{sample}", "CNV.pass.vcf.gz"),
+        annot = join(config['workdir'], "48.somatic_ss_cnv__canvas", "{sample}", "AnnotSV", "Canvas.CNV.pass.tsv"),
+    params:
+        annotdir = join(config['workdir'], "48.somatic_ss_cnv__canvas", "{sample}", "AnnotSV"),
+        annotfile1= "Canvas.CNV.pass"
+    log:
+        out = join(config['pipelinedir'], "logs", "somatic_ss__canvas_annot", "{sample}.o"),
+        err = join(config['pipelinedir'], "logs", "somatic_ss__canvas_annot", "{sample}.e"),
+    threads:
+        int(allocated("threads", "cpu4", cluster))
+    container:
+        config['container']['annotsv']
+    shell:
+        "AnnotSV "
+        "   -SVinputFile {input.vcf} "
+        "   -annotationsDir {config[references][annotsv]} "
+        "   -bedtools bedtools "
+        "   -bcftools bcftools "
+        "   -annotationMode full "
+        "   -genomeBuild GRCh38 "
+        "   -includeCI 1 "
+        "   -overwrite 1 "
+        "   -outputFile {params.annotfile1} "
+        "   -outputDir {params.annotdir} "
+        "   -SVinputInfo 1 "
+        "   -SVminSize 50 "
+        "   -overlap 70 "
+        "   -snvIndelFiles {input.deepvariant} "
+        "   -snvIndelPASS 1 "
+        "  > {log.out} 2> {log.err}\n"
