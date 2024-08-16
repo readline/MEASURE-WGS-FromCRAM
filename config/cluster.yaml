@@ -19,6 +19,20 @@ cram__check_md5:
     time: '1-00:00:00'
     extra: ' --gres=lscratch:20'
 
+cram_merge_sample:
+    partition: 'norm'
+    threads: 2
+    mem: '4g'
+    time: '2-00:00:00'
+    extra: ' --gres=lscratch:20'
+
+cram__verifybamid2:
+    partition: 'norm'
+    threads: 4
+    mem: '8g'
+    time: '2-00:00:00'
+    extra: ' --gres=lscratch:20'
+
 merge_sample_cram:
     partition: 'norm'
     threads: 8
@@ -94,6 +108,13 @@ cramqc__summary_metrics:
     threads: 2
     mem: '4g'
     time: '02:00:00'
+
+germline__peddy:
+    partition: 'norm'
+    threads: 8
+    mem: '32g'
+    time: '2-00:00:00'
+    extra: ' --gres=lscratch:20'
 
 germline__deepvariant1:
     partition: 'norm'
@@ -193,10 +214,31 @@ germline__gripss_germline:
     time: '2-00:00:00'
     extra: ' --gres=lscratch:50'
 
+germline__gridss_annot:
+    partition: 'norm'
+    threads: 8
+    mem: '32g'
+    time: '2-00:00:00'
+    extra: ' --gres=lscratch:50'
+
 germline__tiddit:
     partition: 'norm'
     threads: 24
     mem: '192g'
+    time: '2-00:00:00'
+    extra: ' --gres=lscratch:50'
+
+germline__tiddit_annot:
+    partition: 'norm'
+    threads: 8
+    mem: '32g'
+    time: '2-00:00:00'
+    extra: ' --gres=lscratch:50'
+
+germline__canvas:
+    partition: 'norm'
+    threads: 16
+    mem: '64g'
     time: '2-00:00:00'
     extra: ' --gres=lscratch:50'
 
@@ -270,6 +312,13 @@ somatic_ss__gripss:
     time: '2-00:00:00'
     extra: ' --gres=lscratch:50'
 
+somatic_ss__gridss_annot:
+    partition: 'norm'
+    threads: 8
+    mem: '32g'
+    time: '2-00:00:00'
+    extra: ' --gres=lscratch:50'
+
 somatic_ss__dellysv:
     partition: 'norm'
     threads: 16
@@ -288,6 +337,13 @@ somatic_ss__dellysv_post:
     partition: 'norm'
     threads: 16
     mem: '36g'
+    time: '2-00:00:00'
+    extra: ' --gres=lscratch:50'
+
+somatic_ss__dellysv_annot:
+    partition: 'norm'
+    threads: 8
+    mem: '32g'
     time: '2-00:00:00'
     extra: ' --gres=lscratch:50'
 
@@ -340,6 +396,12 @@ somatic_ss__canvas:
     time: '2-00:00:00'
     extra: ' --gres=lscratch:50'
 
+somatic_ss__canvas_annot:
+    partition: 'norm'
+    threads: 8
+    mem: '32g'
+    time: '2-00:00:00'
+    extra: ' --gres=lscratch:50'
 
 somatic_tn__mutect2_split:
     partition: 'norm'
@@ -373,6 +435,13 @@ somatic_tn__muse:
     partition: 'norm'
     threads: 32
     mem: '64g'
+    time: '2-00:00:00'
+    extra: ' --gres=lscratch:50'
+
+somatic_tn_gridss_prep:
+    partition: 'norm'
+    threads: 2
+    mem: '4g'
     time: '2-00:00:00'
     extra: ' --gres=lscratch:50'
 
