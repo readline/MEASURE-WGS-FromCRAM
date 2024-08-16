@@ -16,7 +16,7 @@ simg:
     manta: https://depot.galaxyproject.org/singularity/manta%3A1.6.0--h9ee0642_2
     verifybamid2: https://depot.galaxyproject.org/singularity/verifybamid2%3A2.0.1--h81e4b3e_10
     peddy: https://depot.galaxyproject.org/singularity/peddy%3A0.4.8--pyh5e36f6f_0
-    tiddit: https://depot.galaxyproject.org/singularity/tiddit%3A3.6.1--py39hec7c8de_0
+    tiddit: https://depot.galaxyproject.org/singularity/tiddit%3A3.7.0--py312h1f1cfbb_0
     hla-la: https://depot.galaxyproject.org/singularity/hla-la%3A1.0.3--hdcf5f25_2
     gridss: https://depot.galaxyproject.org/singularity/gridss%3A2.13.2--h50ea8bc_3
     msisensor-pro: https://depot.galaxyproject.org/singularity/msisensor-pro%3A1.2.0--hfc31af2_0
