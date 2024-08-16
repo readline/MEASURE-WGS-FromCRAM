@@ -471,6 +471,7 @@ rule germline__tiddit:
         "tiddit"
         "  --sv"
         "  --threads {threads}"
+        "  --force_overwrite"
         "  --bam {input.cram}"
         "  --ref {config[references][gatkbundle]}/Homo_sapiens_assembly38.fasta"
         "  -o {params.prefix}"
