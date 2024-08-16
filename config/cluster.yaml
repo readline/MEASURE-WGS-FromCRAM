@@ -222,9 +222,9 @@ germline__gridss_annot:
     extra: ' --gres=lscratch:50'
 
 germline__tiddit:
-    partition: 'norm'
-    threads: 24
-    mem: '192g'
+    partition: 'largemem'
+    threads: 56
+    mem: '512g'
     time: '2-00:00:00'
     extra: ' --gres=lscratch:50'
 
