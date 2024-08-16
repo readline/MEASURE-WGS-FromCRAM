@@ -195,7 +195,7 @@ rule somatic_ss__vardict_split:
         "grep ^chr {config[references][gatkbundle]}/scattered_calling_intervals/{wildcards.itv}/scattered.interval_list|"
         "    cut -f1-3 > {wildcards.itv}.bed"
         "    2> {log.err}\n"
-        "export JAVA_OPTS='\"-Xms90g\" \"-Xmx90g\"'"
+        "export JAVA_OPTS='\"-Xms180g\" \"-Xmx180g\"'"
         "    > {log.out} 2>> {log.err}\n"
         "vardict-java "
         "    -G {config[references][gatkbundle]}/Homo_sapiens_assembly38.fasta "
