@@ -23,7 +23,11 @@ def main():
     # Cache mode
     #######################################################################################
     ## Set default cachedir inside the pipeline folder
-    pipedir = os.path.dirname(__file__)
+    if os.path.islink(__file__):
+        original_path = os.readlink(__file__)
+        pipedir = os.path.dirname(os.path.abspath(os.readlink(__file__)))
+    else:
+        pipedir = os.path.dirname(os.path.abspath(__file__))
     if not options.cachedir:
         options.cachedir = os.path.join(pipedir,'cache')
     elif options.cachedir[0] != '/':
@@ -75,6 +79,9 @@ def main():
     #######################################################################################
     snapshot = 'run_%s'%(time.strftime("%Y%m%d%H%M%S"))
     from scripts.load import samplesheet
+    if not options.cachedir:
+        options.cachedir = '%s/cache'%(pipedir)
+        print('Cache not assigned. Using default cache in pipeline directory.')
     if not options.samplesheet:
         parser.error("Samplesheet (-s) is not specified.")
     if not options.workdir:
@@ -128,7 +135,7 @@ def main():
         savefile.write(yaml.dump(config))
     
     # copy samplesheet
-    os.system('cp %s %s'%( os.path.join(pipedir, options.samplesheet), os.path.join(config['workdir'], 'Pipe_runtime', snapshot, 'sample_sheet.txt') ))
+    os.system('cp %s %s'%(options.samplesheet, os.path.join(config['workdir'], 'Pipe_runtime', snapshot, 'sample_sheet.txt') ))
     
     # copy cluster.yaml
     if os.path.exists(os.path.join(config['workdir'], 'Pipe_runtime', snapshot, 'cluster.yaml')):
