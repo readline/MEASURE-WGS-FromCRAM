@@ -5,3 +5,4 @@ parameter:
     deepvariant_shards: 100
     gridss_shards: 8
     gatkitv: 50
+    vardict: 200

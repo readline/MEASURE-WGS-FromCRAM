@@ -42,3 +42,6 @@ references:
     annotsv:
         link:   /data/yuk5/data/AnnotSV
         path:   reference/AnnotSV
+    vardictitv:
+        link:   /data/yuk5/data/ref/intervals/hg38_200
+        path:   reference/vardictitv

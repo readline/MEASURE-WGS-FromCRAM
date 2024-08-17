@@ -192,7 +192,7 @@ rule somatic_ss__vardict_split:
         config['container']['vardict']
     shell:
         "cd {params.dir}\n"
-        "grep ^chr {config[references][gatkbundle]}/scattered_calling_intervals/{wildcards.itv}/scattered.interval_list|"
+        "grep ^chr {config[references][vardictitv]}/{wildcards.itv}/scattered.interval_list|"
         "    cut -f1-3 > {wildcards.itv}.bed"
         "    2> {log.err}\n"
         "export JAVA_OPTS='\"-Xms180g\" \"-Xmx180g\"'"
@@ -224,7 +224,7 @@ rule somatic_ss__vardict_merge:
     input:
         tbis =lambda wildcards: \
              ["{}/43.somatic_ss_snvindel_vardict/{}/itvs/{}.{}.vardict.vcf.gz.tbi".format(config['workdir'], wildcards.sample, wildcards.sample, itv) \
-                for itv in ['temp_%.4d_of_%d'%(i,config['parameter']['gatkitv']) for i in range(1,config['parameter']['gatkitv']+1)]],
+                for itv in ['temp_%.4d_of_%d'%(i,config['parameter']['vardict']) for i in range(1,config['parameter']['vardict']+1)]],
     output:
         vcf  = join(config['workdir'], "43.somatic_ss_snvindel_vardict", "{sample}", "{sample}.vardict.vcf.gz"),
         vcfp = join(config['workdir'], "43.somatic_ss_snvindel_vardict", "{sample}", "{sample}.vardict.pass.vcf.gz"),
