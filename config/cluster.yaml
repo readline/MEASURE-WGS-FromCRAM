@@ -8,14 +8,14 @@ __default__:
 vcf_compress:
     partition: 'norm'
     threads: 2
-    mem: '4g'
+    mem: '2g'
     time: '1-00:00:00'
     extra: ' --gres=lscratch:20'
 
 cram__check_md5:
     partition: 'norm'
-    threads: 8
-    mem: '16g'
+    threads: 2
+    mem: '2g'
     time: '1-00:00:00'
     extra: ' --gres=lscratch:20'
 
@@ -33,13 +33,6 @@ cram__verifybamid2:
     time: '2-00:00:00'
     extra: ' --gres=lscratch:20'
 
-merge_sample_cram:
-    partition: 'norm'
-    threads: 8
-    mem: '16g'
-    time: '1-00:00:00'
-    extra: ' --gres=lscratch:20'
-
 cram__to_bam:
     partition: 'norm'
     threads: 8
@@ -49,15 +42,15 @@ cram__to_bam:
 
 cram__to_chrm:
     partition: 'norm'
-    threads: 8
-    mem: '16g'
+    threads: 2
+    mem: '4g'
     time: '1-00:00:00'
     extra: ' --gres=lscratch:20'
 
 cramqc__flagstat:
     partition: 'norm'
-    threads: 8
-    mem: '16g'
+    threads: 4
+    mem: '8g'
     time: '1-00:00:00'
     extra: ' --gres=lscratch:20'
 
@@ -98,8 +91,8 @@ cramqc__collect_aggregation_metrics:
 
 cramqc__mosdepth:
     partition: 'norm'
-    threads: 8
-    mem: '16g'
+    threads: 4
+    mem: '8g'
     time: '2-00:00:00'
     extra: ' --gres=lscratch:50'
 
@@ -322,7 +315,7 @@ somatic_ss__gridss_annot:
 somatic_ss__dellysv:
     partition: 'norm'
     threads: 16
-    mem: '36g'
+    mem: '64g'
     time: '2-00:00:00'
     extra: ' --gres=lscratch:50'
 
