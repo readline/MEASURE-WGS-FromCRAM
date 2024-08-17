@@ -101,7 +101,7 @@ rule somatic_ss__mutect2_merge:
 
 rule somatic_ss__octopus_split:
     input:
-        cram = join(config['workdir'], "01.cram", "{sample}", "{sample}.cram"),
+        bam = join(config['workdir'], "02.bam", "{sample}", "{sample}.bam"),
     output:
         vcf = temp(join(config['workdir'], "42.somatic_ss_snvindel_octopus", "{sample}", "chroms", "{sample}.{chr}.octopus.vcf")),
     params:
@@ -122,7 +122,7 @@ rule somatic_ss__octopus_split:
         "    --working-directory {params.dir} "
         "    --temp-directory-prefix tmp "
         "    -R {config[references][gatkbundle]}/Homo_sapiens_assembly38.fasta "
-        "    -I {input.cram} "
+        "    -I {input.bam} "
         "    -o {output.vcf} "
         "    --forest-model /opt/octopus/resources/forests/germline.v0.7.4.forest "
         "    --somatic-forest-model /opt/octopus/resources/forests/somatic.v0.7.4.forest "
