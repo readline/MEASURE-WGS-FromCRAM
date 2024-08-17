@@ -629,9 +629,13 @@ rule germline__gridss_call:
         "  -w {params.workspace}"
         "  {input.cram}"
         "  > {log.out} 2> {log.err}\n"
-        "bcftools view -W -O z -o {output.vcfgz} {output.vcf}"
+        "bcftools view -O z -o {output.vcfgz} {output.vcf}"
         "  >> {log.out} 2>> {log.err}\n"
-        "bcftools view -W -O z -f PASS -o {output.vcfpgz} {output.vcf}"
+        "bcftools view -O z -f PASS -o {output.vcfpgz} {output.vcf}"
+        "  >> {log.out} 2>> {log.err}\n"
+        "tabix -p vcf {output.vcfgz}"
+        "  >> {log.out} 2>> {log.err}\n"
+        "tabix -p vcf {output.vcfpgz}"
         "  >> {log.out} 2>> {log.err}\n"
 
 
