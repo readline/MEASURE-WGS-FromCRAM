@@ -21,12 +21,17 @@ fi
 
 uid=$(uuidgen|cut -d '-' -f1)
 echo 'Snakemake captain uid:' $uid
+echo $uid > [[WORKDIR]]/Pipe_runtime/current_uid 
+echo [[SNAPSHOT]] > [[WORKDIR]]/Pipe_runtime/current_snapshot
+
 # Main process of pipeline
-snakemake --latency-wait 120 --snakefile Snakefile -d "[[WORKDIR]]" \
+snakemake --snakefile Snakefile -d "[[WORKDIR]]" \
   --cores 8 \
   --local-cores 8 \
-  --jobs 999 \
+  --jobs 2000 \
   --latency-wait 120 all \
+  --max-jobs-per-second 1 \
+  --max-status-checks-per-second 0.01 \
   --use-singularity \
   --singularity-args "-B [[BINDPATH]]" \
   --configfile="[[WORKDIR]]/Pipe_runtime/[[SNAPSHOT]]/config.yaml" \
