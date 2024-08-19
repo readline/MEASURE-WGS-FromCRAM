@@ -6,52 +6,52 @@ __default__:
     extra: ' --gres=lscratch:20'
 
 vcf_compress:
-    partition: 'norm'
+    partition: 'norm,quick'
     threads: 2
     mem: '2g'
-    time: '1-00:00:00'
+    time: '04:00:00'
     extra: ' --gres=lscratch:20'
 
 cram__check_md5:
-    partition: 'norm'
+    partition: 'norm,quick'
     threads: 2
     mem: '2g'
-    time: '1-00:00:00'
+    time: '04:00:00'
     extra: ' --gres=lscratch:20'
 
 cram_merge_sample:
-    partition: 'norm'
+    partition: 'norm,quick'
     threads: 2
     mem: '4g'
-    time: '2-00:00:00'
+    time: '04:00:00'
     extra: ' --gres=lscratch:20'
 
 cram__verifybamid2:
-    partition: 'norm'
+    partition: 'norm,quick'
     threads: 4
     mem: '8g'
-    time: '2-00:00:00'
+    time: '04:00:00'
     extra: ' --gres=lscratch:20'
 
 cram__to_bam:
-    partition: 'norm'
+    partition: 'norm,quick'
     threads: 8
     mem: '16g'
-    time: '2-00:00:00'
+    time: '04:00:00'
     extra: ' --gres=lscratch:20'
 
 cram__to_chrm:
-    partition: 'norm'
+    partition: 'norm,quick'
     threads: 2
     mem: '4g'
-    time: '1-00:00:00'
+    time: '04:00:00'
     extra: ' --gres=lscratch:20'
 
 cramqc__flagstat:
-    partition: 'norm'
+    partition: 'norm,quick'
     threads: 4
     mem: '8g'
-    time: '1-00:00:00'
+    time: '04:00:00'
     extra: ' --gres=lscratch:20'
 
 cramqc__collect_quality_yield_metrics:
@@ -90,17 +90,17 @@ cramqc__collect_aggregation_metrics:
     extra: ' --gres=lscratch:20'
 
 cramqc__mosdepth:
-    partition: 'norm'
+    partition: 'norm,quick'
     threads: 4
     mem: '8g'
-    time: '2-00:00:00'
+    time: '04:00:00'
     extra: ' --gres=lscratch:50'
 
 cramqc__summary_metrics:
-    partition: 'norm'
+    partition: 'norm,quick'
     threads: 2
     mem: '4g'
-    time: '02:00:00'
+    time: '04:00:00'
 
 germline__peddy:
     partition: 'norm'
@@ -110,10 +110,10 @@ germline__peddy:
     extra: ' --gres=lscratch:20'
 
 germline__deepvariant1:
-    partition: 'norm'
+    partition: 'norm,quick'
     threads: 2
     mem: '4g'
-    time: '2-00:00:00'
+    time: '04:00:00'
     extra: ' --gres=lscratch:20'
 
 germline__deepvariant2:
@@ -138,10 +138,10 @@ germline__gatk_hcitv:
     extra: ' --gres=lscratch:50'
 
 germline__gatk_hcmerge:
-    partition: 'norm'
+    partition: 'norm,quick'
     threads: 4
     mem: '24g'
-    time: '2-00:00:00'
+    time: '04:00:00'
     extra: ' --gres=lscratch:200'
 
 germline__gdbimport:
@@ -278,10 +278,10 @@ somatic_ss__mutect2_split:
     extra: ' --gres=lscratch:50'
 
 somatic_ss__mutect2_merge:
-    partition: 'norm'
+    partition: 'norm,quick'
     threads: 4
     mem: '32g'
-    time: '2-00:00:00'
+    time: '04:00:00'
     extra: ' --gres=lscratch:50'
 
 somatic_ss__octopus_split:
@@ -327,10 +327,10 @@ somatic_ss__dellysv_joint:
     extra: ' --gres=lscratch:50 --constraint=e7543'
 
 somatic_ss__dellysv_post:
-    partition: 'norm'
+    partition: 'norm,quick'
     threads: 16
     mem: '36g'
-    time: '2-00:00:00'
+    time: '04:00:00'
     extra: ' --gres=lscratch:50'
 
 somatic_ss__dellysv_annot:
@@ -355,31 +355,31 @@ somatic_ss__vardict_merge:
     extra: ' --gres=lscratch:50'
 
 somatic_ss__cnvkit:
-    partition: 'norm'
+    partition: 'norm,quick'
     threads: 16
     mem: '64g'
-    time: '2-00:00:00'
+    time: '04:00:00'
     extra: ' --gres=lscratch:50'
 
 somatic_ss__amber:
-    partition: 'norm'
+    partition: 'norm,quick'
     threads: 10
     mem: '32g'
-    time: '2-00:00:00'
+    time: '04:00:00'
     extra: ' --gres=lscratch:50'
 
 somatic_ss__cobalt:
-    partition: 'norm'
+    partition: 'norm,quick'
     threads: 24
     mem: '48g'
-    time: '2-00:00:00'
+    time: '04:00:00'
     extra: ' --gres=lscratch:50'
 
 somatic_ss__purple:
-    partition: 'norm'
+    partition: 'norm,quick'
     threads: 24
     mem: '48g'
-    time: '2-00:00:00'
+    time: '04:00:00'
     extra: ' --gres=lscratch:50'
 
 somatic_ss__canvas:
@@ -432,10 +432,10 @@ somatic_tn__muse:
     extra: ' --gres=lscratch:50'
 
 somatic_tn_gridss_prep:
-    partition: 'norm'
+    partition: 'norm,quick'
     threads: 2
     mem: '4g'
-    time: '2-00:00:00'
+    time: '04:00:00'
     extra: ' --gres=lscratch:50'
 
 somatic_tn__gridss_assemble_shards:
@@ -486,22 +486,22 @@ somatic_tn__dellysv_post:
     extra: ' --gres=lscratch:50'
     
 somatic_tn__amber:
-    partition: 'norm'
+    partition: 'norm,quick'
     threads: 10
     mem: '32g'
-    time: '2-00:00:00'
+    time: '04:00:00'
     extra: ' --gres=lscratch:50'
 
 somatic_tn__cobalt:
-    partition: 'norm'
+    partition: 'norm,quick'
     threads: 24
     mem: '48g'
-    time: '2-00:00:00'
+    time: '04:00:00'
     extra: ' --gres=lscratch:50'
 
 somatic_tn__purple:
-    partition: 'norm'
+    partition: 'norm,quick'
     threads: 24
     mem: '48g'
-    time: '2-00:00:00'
+    time: '04:00:00'
     extra: ' --gres=lscratch:50'
