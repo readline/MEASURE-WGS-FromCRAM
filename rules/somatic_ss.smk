@@ -72,6 +72,7 @@ rule somatic_ss__mutect2_merge:
     container:
         config['container']['gatk']
     shell:
+        "cd {params.dir} \n"
         "bcftools concat "
         "    -a "
         "    -O z "
