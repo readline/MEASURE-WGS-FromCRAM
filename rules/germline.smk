@@ -896,7 +896,7 @@ rule germline__msi_msisensorpro:
 
 rule germline__hlala:
     input:
-        cram = join(config['workdir'], "01.cram", "{sample}", "{sample}.cram"),
+        bam    = join(config['workdir'], "02.bam", "{sample}", "{sample}.bam"),
     output:
         txt = join(config['workdir'], "25.germline_hla-la", "{sample}", "hla", "summaryStatistics.txt"),
     params: 
@@ -913,7 +913,7 @@ rule germline__hlala:
     shell:
         "singularity exec -B {params.bind} {params.sif} "
         "  HLA-LA.pl "
-        "  --BAM {input.cram} "
+        "  --BAM {input.bam} "
         "  --graph PRG_MHC_GRCh38_withIMGT "
         "  --sampleID {params.sample} "
         "  --maxThreads {threads} "
