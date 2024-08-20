@@ -343,7 +343,7 @@ somatic_ss__dellysv_annot:
 somatic_ss__vardict_split:
     partition: 'norm'
     threads: 16
-    mem: '192g'
+    mem: '96g'
     time: '2-00:00:00'
     extra: ' --gres=lscratch:50'
 

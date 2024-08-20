@@ -104,12 +104,12 @@ rule somatic_ss__octopus_split:
     input:
         bam = join(config['workdir'], "02.bam", "{sample}", "{sample}.bam"),
     output:
-        vcf = temp(join(config['workdir'], "42.somatic_ss_snvindel_octopus", "{sample}", "chroms", "{sample}.{chr}.octopus.vcf")),
+        vcf = temp(join(config['workdir'], "42.somatic_ss_snvindel_octopus", "{sample}", "itvs", "{sample}.{itv}.octopus.vcf")),
     params:
-        dir = join(config['workdir'], "42.somatic_ss_snvindel_octopus", "{sample}", "chroms", "{chr}"),
+        dir = join(config['workdir'], "42.somatic_ss_snvindel_octopus", "{sample}", "itvs", "{itv}"),
     log:
-        out = join(config['pipelinedir'], "logs", "somatic_ss__octopus_split", "{sample}.{chr}.o"),
-        err = join(config['pipelinedir'], "logs", "somatic_ss__octopus_split", "{sample}.{chr}.e"),
+        out = join(config['pipelinedir'], "logs", "somatic_ss__octopus_split", "{sample}.{itv}.o"),
+        err = join(config['pipelinedir'], "logs", "somatic_ss__octopus_split", "{sample}.{itv}.e"),
     threads:
         int(allocated("threads", "somatic_ss__octopus_split", cluster))
     container:
@@ -117,6 +117,9 @@ rule somatic_ss__octopus_split:
     shell:
         "mkdir -p {params.dir}/tmp\n"
         "cd {params.dir}\n"
+        "grep ^chr {config[references][vardictitv]}/{wildcards.itv}/scattered.interval_list|"
+        "    cut -f1-3 > {wildcards.itv}.bed"
+        "    2> {log.err}\n"
         "octopus "
         "    --threads {threads} "
         "    -C cancer "
@@ -128,13 +131,14 @@ rule somatic_ss__octopus_split:
         "    --forest-model /opt/octopus/resources/forests/germline.v0.7.4.forest "
         "    --somatic-forest-model /opt/octopus/resources/forests/somatic.v0.7.4.forest "
         "    --annotations AC AD DP "
-        "    -T {wildcards.chr} "
+        "    -t {wildcards.itv}.bed "
         "    > {log.out} 2> {log.err}\n"
 
 rule somatic_ss__octopus_merge:
     input:
         tbis =lambda wildcards: \
-             ["{}/42.somatic_ss_snvindel_octopus/{}/chroms/{}.{}.octopus.vcf.gz.tbi".format(config['workdir'], wildcards.sample, wildcards.sample, chrid) for chrid in ['chr%d'%(i) for i in range(1,23)]+['chrX','chrY']],
+             ["{}/42.somatic_ss_snvindel_octopus/{}/itvs/{}.{}.octopus.vcf.gz.tbi".format(config['workdir'], wildcards.sample, wildcards.sample, itv) \
+             for itv in ['temp_%.4d_of_%d'%(i,config['parameter']['vardict']) for i in range(1,config['parameter']['vardict']+1)]],
     output:
         vcf  = join(config['workdir'], "42.somatic_ss_snvindel_octopus", "{sample}", "{sample}.octopus.vcf.gz"),
         vcfp = join(config['workdir'], "42.somatic_ss_snvindel_octopus", "{sample}", "{sample}.octopus.pass.vcf.gz"),
@@ -173,7 +177,7 @@ rule somatic_ss__octopus_merge:
         "    >> {log.out} 2>> {log.err}\n"
         "tabix -p vcf {output.vcf} "
         "    >> {log.out} 2>> {log.err}\n"
-        "rm -rf {params.dir}/chroms"
+        "rm -rf {params.dir}/itvs"
         "    >> {log.out} 2>> {log.err}\n"
 
 rule somatic_ss__vardict_split:
@@ -196,7 +200,7 @@ rule somatic_ss__vardict_split:
         "grep ^chr {config[references][vardictitv]}/{wildcards.itv}/scattered.interval_list|"
         "    cut -f1-3 > {wildcards.itv}.bed"
         "    2> {log.err}\n"
-        "export JAVA_OPTS='\"-Xms180g\" \"-Xmx180g\"'"
+        "export JAVA_OPTS='\"-Xms90g\" \"-Xmx90g\"'"
         "    > {log.out} 2>> {log.err}\n"
         "vardict-java "
         "    -G {config[references][gatkbundle]}/Homo_sapiens_assembly38.fasta "
@@ -256,7 +260,7 @@ rule somatic_ss__vardict_merge:
         "    >> {log.out} 2>> {log.err}\n"
         "tabix -p vcf {output.vcf} "
         "    >> {log.out} 2>> {log.err}\n"
-        "rm -rf {params.dir}/chroms"
+        "rm -rf {params.dir}/itvs"
         "    >> {log.out} 2>> {log.err}\n"
 
 
