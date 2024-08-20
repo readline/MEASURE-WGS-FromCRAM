@@ -641,7 +641,7 @@ rule germline__gridss_call:
 
 rule germline__gridss_virusbreakend:
     input:
-        cram = join(config['workdir'], "01.cram", "{sample}", "{sample}.cram"),
+        bam = join(config['workdir'], "02.bam", "{sample}", "{sample}.bam"),
     output:
         vcf = temp(join(config['workdir'], "16.germline_sv_virusbreakend", "{sample}", "{sample}.virusbreakend.vcf")),
         vcfgz = join(config['workdir'], "16.germline_sv_virusbreakend", "{sample}", "{sample}.virusbreakend.vcf.gz"),
@@ -664,7 +664,7 @@ rule germline__gridss_virusbreakend:
         "  -j /usr/local/share/gridss-2.13.2-3/gridss.jar "
         "  -o {output.vcf} "
         "  --db {config[references][virusbreakend]} "
-        "  {input.cram}"
+        "  {input.bam}"
         "  > {log.out} 2> {log.err}\n"
         "bcftools view -W -O z -o {output.vcfgz} {output.vcf}"
         "  >> {log.out} 2>> {log.err}\n"
