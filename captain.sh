@@ -41,7 +41,9 @@ snakemake --snakefile Snakefile -d "[[WORKDIR]]" \
   --jobname "{name}.{jobid}.uid_"$uid".sh" \
   --stats "[[WORKDIR]]/Pipe_runtime/[[SNAPSHOT]]/logs/runtime_statistics.json" \
   --keep-going \
+  --restart-times 3 \
   --rerun-incomplete \
+  --rerun-triggers mtime \
   --keep-remote 2>&1
 
 # Create summary report

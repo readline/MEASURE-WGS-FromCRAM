@@ -17,7 +17,6 @@ rule somatic_ss__mutect2_split:
         err = join(config['pipelinedir'], "logs", "somatic_ss__mutect2_split", "{sample}.{chr}.e"),
     threads:
         int(allocated("threads", "somatic_ss__mutect2_split", cluster))
-    max_attempts: 3
     container:
         config['container']['gatk']
     shell:
@@ -70,7 +69,6 @@ rule somatic_ss__mutect2_merge:
         err = join(config['pipelinedir'], "logs", "somatic_ss__mutect2_merge", "{sample}.e"),
     threads:
         int(allocated("threads", "somatic_ss__mutect2_merge", cluster))
-    max_attempts: 3
     container:
         config['container']['gatk']
     shell:
@@ -114,7 +112,6 @@ rule somatic_ss__octopus_split:
         err = join(config['pipelinedir'], "logs", "somatic_ss__octopus_split", "{sample}.{itv}.e"),
     threads:
         int(allocated("threads", "somatic_ss__octopus_split", cluster))
-    max_attempts: 3
     container:
         config['container']['octopus']
     shell:
@@ -154,7 +151,6 @@ rule somatic_ss__octopus_merge:
         err = join(config['pipelinedir'], "logs", "somatic_ss__octopus_merge", "{sample}.e"),
     threads:
         int(allocated("threads", "somatic_ss__octopus_merge", cluster))
-    max_attempts: 3
     container:
         config['container']['gatk']
     shell:
@@ -197,7 +193,6 @@ rule somatic_ss__vardict_split:
         err = join(config['pipelinedir'], "logs", "somatic_ss__vardict_split", "{sample}.{itv}.e"),
     threads:
         int(allocated("threads", "somatic_ss__vardict_split", cluster))
-    max_attempts: 3
     container:
         config['container']['vardict']
     shell:
@@ -246,7 +241,6 @@ rule somatic_ss__vardict_merge:
         err = join(config['pipelinedir'], "logs", "somatic_ss__vardict_merge", "{sample}.e"),
     threads:
         int(allocated("threads", "somatic_ss__vardict_merge", cluster))
-    max_attempts: 3
     container:
         config['container']['gatk']
     shell:
@@ -282,7 +276,6 @@ rule somatic_ss__gripss:
         err = join(config['pipelinedir'], "logs", "somatic_ss__gripss", "{sample}.e"),
     threads:
         int(allocated("threads", "somatic_ss__gripss", cluster))
-    max_attempts: 3
     container:
         config['container']['gripss']
     shell:
@@ -311,7 +304,6 @@ rule somatic_ss__gridss_annot:
         err = join(config['pipelinedir'], "logs", "somatic_ss__gridss_annot", "{sample}.e"),
     threads:
         int(allocated("threads", "somatic_ss__gridss_annot", cluster))
-    max_attempts: 3
     container:
         config['container']['annotsv']
     shell:
@@ -344,7 +336,6 @@ rule somatic_ss__dellysv:
         err = join(config['pipelinedir'], "logs", "somatic_ss__dellysv", "{sample}.e"),
     threads:
         int(allocated("threads", "somatic_ss__dellysv", cluster))
-    max_attempts: 3
     container:
         config['container']['delly']
     shell:
@@ -373,7 +364,6 @@ rule somatic_ss__dellysv_joint:
         err = join(config['pipelinedir'], "logs", "somatic_ss__dellysv_int", "Merge.e"),
     threads:
         int(allocated("threads", "somatic_ss__dellysv_joint", cluster))
-    max_attempts: 3
     container:
         config['container']['delly']
     shell:
@@ -417,7 +407,6 @@ rule somatic_ss__dellysv_post:
         err = join(config['pipelinedir'], "logs", "somatic_ss__dellysv_post", "Post.e"),
     threads:
         int(allocated("threads", "somatic_ss__dellysv_post", cluster))
-    max_attempts: 3
     container:
         config['container']['delly']
     shell:
@@ -457,7 +446,6 @@ rule somatic_ss__dellysv_annot:
         err = join(config['pipelinedir'], "logs", "somatic_ss__dellysv_annot", "AnnotSV.e"),
     threads:
         int(allocated("threads", "somatic_ss__dellysv_annot", cluster))
-    max_attempts: 3
     container:
         config['container']['annotsv']
     shell:
@@ -507,7 +495,6 @@ rule somatic_ss__cnvkit:
         err = join(config['pipelinedir'], "logs", "somatic_ss__cnvkit", "{sample}.e"),
     threads:
         int(allocated("threads", "somatic_ss__cnvkit", cluster))
-    max_attempts: 3
     container:
         config['container']['cnvkit']
     shell:
@@ -536,7 +523,6 @@ rule somatic_ss__amber:
         err = join(config['pipelinedir'], "logs", "somatic_ss__amber", "{sample}.e"),
     threads:
         int(allocated("threads", "somatic_ss__amber", cluster))
-    max_attempts: 3
     container:
         config['container']['amber']
     shell:
@@ -565,7 +551,6 @@ rule somatic_ss__cobalt:
         err = join(config['pipelinedir'], "logs", "somatic_ss__cobalt", "{sample}.e"),
     threads:
         int(allocated("threads", "somatic_ss__cobalt", cluster))
-    max_attempts: 3
     container:
         config['container']['cobalt']
     shell:
@@ -599,7 +584,6 @@ rule somatic_ss__purple:
         err = join(config['pipelinedir'], "logs", "somatic_ss__purple", "{sample}.e"),
     threads:
         int(allocated("threads", "somatic_ss__purple", cluster))
-    max_attempts: 3
     container:
         config['container']['purple']
     shell:
@@ -636,7 +620,6 @@ rule somatic_ss__canvas:
         err = join(config['pipelinedir'], "logs", "somatic_ss__canvas", "{sample}.e"),
     threads:
         int(allocated("threads", "somatic_ss__canvas", cluster))
-    max_attempts: 3
     container:
         config['container']['canvas']
     shell: 
@@ -678,7 +661,6 @@ rule somatic_ss__canvas_annot:
         err = join(config['pipelinedir'], "logs", "somatic_ss__canvas_annot", "{sample}.e"),
     threads:
         int(allocated("threads", "somatic_ss__canvas_annot", cluster))
-    max_attempts: 3
     container:
         config['container']['annotsv']
     shell:

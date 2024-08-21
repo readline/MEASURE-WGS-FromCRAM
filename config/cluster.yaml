@@ -414,7 +414,7 @@ somatic_tn__strelka:
     partition: 'norm'
     threads: 24
     mem: '48g'
-    time: '2-00:00:00'
+    time: '24-00:00:00'
     extra: ' --gres=lscratch:50'
 
 somatic_tn__manta:
@@ -425,6 +425,13 @@ somatic_tn__manta:
     extra: ' --gres=lscratch:50'
 
 somatic_tn__muse:
+    partition: 'norm'
+    threads: 32
+    mem: '64g'
+    time: '2-00:00:00'
+    extra: ' --gres=lscratch:50'
+
+somatic_tn__muse_sump:
     partition: 'norm'
     threads: 32
     mem: '64g'

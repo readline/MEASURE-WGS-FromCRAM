@@ -19,7 +19,6 @@ rule somatic_tn__mutect2_split:
         err = join(config['pipelinedir'], "logs", "somatic_tn__mutect2_split", "{sample}.{chr}.e"),
     threads:
         int(allocated("threads", "somatic_tn__mutect2_split", cluster))
-    max_attempts: 3
     container:
         config['container']['gatk']
     shell:
@@ -80,7 +79,6 @@ rule somatic_tn__mutect2_merge:
         err = join(config['pipelinedir'], "logs", "somatic_tn__mutect2_merge", "{sample}.e"),
     threads:
         int(allocated("threads", "somatic_tn__mutect2_merge", cluster))
-    max_attempts: 3
     container:
         config['container']['gatk']
     shell:
@@ -126,7 +124,6 @@ rule somatic_tn__strelka:
         err = join(config['pipelinedir'], "logs", "somatic_tn__strelka", "{sample}.e"),
     threads:
         int(allocated("threads", "somatic_tn__strelka", cluster))
-    max_attempts: 3
     container:
         config['container']['strelka']
     shell:
@@ -184,7 +181,7 @@ rule somatic_tn__muse:
         bam = join(config['workdir'], "02.bam", "{sample}", "{sample}.bam"),
         bam0 = lambda wildcards: "{}/02.bam/{}/{}.bam".format(config['workdir'], dic_tumor_to_normal[wildcards.sample], dic_tumor_to_normal[wildcards.sample]), 
     output:
-        vcf = join(config['workdir'], "33.somatic_snv_muse", "{sample}", "{sample}.MuSE.vcf"),
+        txt = join(config['workdir'], "33.somatic_snv_muse", "{sample}", "{sample}.MuSE.txt"),
     params:
         dir = join(config['workdir'], "33.somatic_snv_muse", "{sample}"),
         prefix = join(config['workdir'], "33.somatic_snv_muse", "{sample}", "{sample}"),
@@ -193,7 +190,6 @@ rule somatic_tn__muse:
         err = join(config['pipelinedir'], "logs", "somatic_tn__muse", "{sample}.e"),
     threads:
         int(allocated("threads", "somatic_tn__muse", cluster))
-    max_attempts: 3
     container:
         config['container']['muse']
     shell:
@@ -209,15 +205,39 @@ rule somatic_tn__muse:
         "    {input.bam} "
         "    {input.bam0} "
         " >> {log.out} 2>> {log.err}\n"
+
+rule somatic_tn__muse_sump:
+    input:
+        txt = join(config['workdir'], "33.somatic_snv_muse", "{sample}", "{sample}.MuSE.txt"),
+    output:
+        vcf = join(config['workdir'], "33.somatic_snv_muse", "{sample}", "{sample}.MuSE.vcf"),
+    params:
+        dir = join(config['workdir'], "33.somatic_snv_muse", "{sample}"),
+        prefix = join(config['workdir'], "33.somatic_snv_muse", "{sample}", "{sample}"),
+    log:
+        out = join(config['pipelinedir'], "logs", "somatic_tn__muse_sump", "{sample}.o"),
+        err = join(config['pipelinedir'], "logs", "somatic_tn__muse_sump", "{sample}.e"),
+    threads:
+        int(allocated("threads", "somatic_tn__muse_sump", cluster))
+    container:
+        config['container']['muse']
+    shell:
+        "cd {params.dir}\n"
+        "cat {input.txt} |grep -E '^#|^chr1|^chr2|^chr3|^chr4|^chr5|^chr6|^chr7|^chr8|^chr9|^chr10|^chr11|^chr12|^chr13|^chr14|^chr15|^chr16|^chr17|^chr18|^chr19|^chr20|^chr21|^chr22|^chrX|^chrY|^chrM'"
+        "  > {params.prefix.MuSE.main.txt} 2> {log.err} \n"
         "/MuSE/bin/MuSE sump "
-        "    -I {params.prefix}.MuSE.txt "
+        "    -I {params.prefix.MuSE.main.txt} "
         "    -n {threads}"
         "    -G "
         "    -D Homo_sapiens_assembly38.dbsnp138.vcf.gz "
         "    -O {params.prefix}.MuSE.vcf"
-        " >> {log.out} 2>> {log.err} \n"
-        "rm Homo_sapiens_assembly38.dbsnp138.vcf.gz"
-        " > {log.out} 2> {log.err}\n"
+        " > {log.out} 2> {log.err} \n"
+        "gzip {input.txt}"
+        " >> {log.out} 2>> {log.err}\n"
+        "rm {params.prefix.MuSE.main.txt}"
+        " >> {log.out} 2>> {log.err}\n"
+        "rm Homo_sapiens_assembly38.dbsnp138.vcf.gz*"
+        " >> {log.out} 2>> {log.err}\n"
 
 rule somatic_tn__muse_post:
     input:
@@ -233,7 +253,6 @@ rule somatic_tn__muse_post:
         err = join(config['pipelinedir'], "logs", "somatic_tn__muse_post", "{sample}.e"),
     threads:
         int(allocated("threads", "somatic_tn__muse_post", cluster))
-    max_attempts: 3
     container:
         config['container']['gatk']
     shell:
@@ -270,7 +289,6 @@ rule somatic_tn_gridss_prep:
     log:
         out = join(config['pipelinedir'], "logs", "somatic_tn_gridss_prep", "{sample}.o"),
         err = join(config['pipelinedir'], "logs", "somatic_tn_gridss_prep", "{sample}.e"),
-    max_attempts: 3
     threads:
         int(allocated("threads", "somatic_tn_gridss_prep", cluster))
     shell:
@@ -297,7 +315,6 @@ rule somatic_tn__gridss_assemble_shards:
         err = join(config['pipelinedir'], "logs", "somatic_tn__gridss_assemble_shards", "{sample}.{shard}.e"),
     threads:
         int(allocated("threads", "somatic_tn__gridss_assemble_shards", cluster))
-    max_attempts: 3
     container:
         config['container']['gridss']
     shell:
@@ -335,7 +352,6 @@ rule somatic_tn__gridss_call:
         err = join(config['pipelinedir'], "logs", "somatic_tn__gridss_call", "{sample}.e"),
     threads:
         int(allocated("threads", "somatic_tn__gridss_call", cluster))
-    max_attempts: 3
     container:
         config['container']['gridss']
     shell:
@@ -364,7 +380,6 @@ rule somatic_tn__gripss:
         err = join(config['pipelinedir'], "logs", "somatic_ss__gripss", "{sample}.e"),
     threads:
         int(allocated("threads", "somatic_tn__gripss", cluster))
-    max_attempts: 3
     container:
         config['container']['gripss']
     shell:
@@ -400,7 +415,6 @@ rule somatic_tn__dellysv:
         err = join(config['pipelinedir'], "logs", "somatic_tn__dellysv", "{sample}.e"),
     threads:
         int(allocated("threads", "somatic_tn__dellysv", cluster))
-    max_attempts: 3
     container:
         config['container']['delly']
     shell:
@@ -439,7 +453,6 @@ rule somatic_tn__dellysv_joint:
         err = join(config['pipelinedir'], "logs", "somatic_tn__dellysv2", "Merge.e"),
     threads:
         int(allocated("threads", "somatic_tn__dellysv_joint", cluster))
-    max_attempts: 3
     container:
         config['container']['delly']
     shell:
@@ -487,7 +500,6 @@ rule somatic_tn__dellysv_post:
         err = join(config['pipelinedir'], "logs", "somatic_tn__dellysv_post", "Post.e"),
     threads:
         int(allocated("threads", "somatic_tn__dellysv_post", cluster))
-    max_attempts: 3
     container:
         config['container']['delly']
     shell:
@@ -531,7 +543,6 @@ rule somatic_tn__amber:
         err = join(config['pipelinedir'], "logs", "somatic_tn__amber", "{sample}.e"),
     threads:
         int(allocated("threads", "somatic_tn__amber", cluster))
-    max_attempts: 3
     container:
         config['container']['amber']
     shell:
@@ -564,7 +575,6 @@ rule somatic_tn__cobalt:
         err = join(config['pipelinedir'], "logs", "somatic_tn__cobalt", "{sample}.e"),
     threads:
         int(allocated("threads", "somatic_tn__cobalt", cluster))
-    max_attempts: 3
     container:
         config['container']['cobalt']
     shell:
@@ -600,7 +610,6 @@ rule somatic_tn__purple:
         err = join(config['pipelinedir'], "logs", "somatic_tn__purple", "{sample}.e"),
     threads:
         int(allocated("threads", "somatic_tn__purple", cluster))
-    max_attempts: 3
     container:
         config['container']['purple']
     shell:
