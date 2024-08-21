@@ -106,16 +106,19 @@ rule germline__deepvariant3:
         "singularity exec -B {params.bind} --nv {params.sif} "
         "bcftools view -O z -o {output.vcf} {params.vcf}"
         " >> {log.out} 2>> {log.err}\n"
+        "singularity exec -B {params.bind} --nv {params.sif} "
         "bcftools index -f --threads {threads} {output.vcf}"
         " >> {log.out} 2>> {log.err}\n"
         "singularity exec -B {params.bind} --nv {params.sif} "
         "bcftools view -O z -f PASS -o {output.vcfp} {params.vcf}"
         " >> {log.out} 2>> {log.err}\n"
+        "singularity exec -B {params.bind} --nv {params.sif} "
         "bcftools index -f --threads {threads} {output.vcf}"
         " >> {log.out} 2>> {log.err}\n"
         "singularity exec -B {params.bind} --nv {params.sif} "
         "bcftools view -O z -o {output.gvcf} {params.gvcf}"
         " >> {log.out} 2>> {log.err}\n"
+        "singularity exec -B {params.bind} --nv {params.sif} "
         "bcftools index -f --threads {threads} {output.vcf}"
         " >> {log.out} 2>> {log.err}\n"
         "rm -rf {params.folder}"
@@ -217,14 +220,14 @@ rule germline__gdbimport:
         config['container']['gatk']
     shell:
         """
-        gatk --java-options "-Xmx4g -Xms4g -Djava.io.tmpdir=/lscratch/$SLURM_JOB_ID" \
+        gatk --java-options "-Xmx24g -Xms24g -Djava.io.tmpdir=/lscratch/$SLURM_JOB_ID" \
             GenomicsDBImport \
             {params.inputvcfs} \
             -L {params.interval} \
             --genomicsdb-workspace-path /lscratch/$SLURM_JOB_ID/gdb.itv_{wildcards.itv} \
             --merge-input-intervals \
             --consolidate >> {log.out} 2>> {log.err}
-        gatk --java-options "-Xmx5g -Xms5g -Djava.io.tmpdir=/lscratch/$SLURM_JOB_ID" \
+        gatk --java-options "-Xmx24g -Xms24g -Djava.io.tmpdir=/lscratch/$SLURM_JOB_ID" \
             GenotypeGVCFs \
             -R {config[references][gatkbundle]}/Homo_sapiens_assembly38.fasta \
             -O {output.itvvcf} \
@@ -234,13 +237,13 @@ rule germline__gdbimport:
             --merge-input-intervals \
             -V gendb:///lscratch/$SLURM_JOB_ID/gdb.itv_{wildcards.itv} \
             -L {params.interval}   >> {log.out} 2>> {log.err}
-        gatk --java-options "-Xmx16g -Xms16g -Djava.io.tmpdir=/lscratch/$SLURM_JOB_ID" \
+        gatk --java-options "-Xmx24g -Xms24g -Djava.io.tmpdir=/lscratch/$SLURM_JOB_ID" \
             VariantFiltration \
             --filter-expression "ExcessHet>54.69" \
             --filter-name ExcessHet \
             -V {output.itvvcf} \
             -O {output.itvmf} >> {log.out} 2>> {log.err}
-        gatk --java-options "-Xmx16g -Xms16g -Djava.io.tmpdir=/lscratch/$SLURM_JOB_ID" \
+        gatk --java-options "-Xmx24g -Xms24g -Djava.io.tmpdir=/lscratch/$SLURM_JOB_ID" \
             MakeSitesOnlyVcf \
              -I {output.itvmf} \
              -O {output.itvso} >> {log.out} 2>> {log.err}
@@ -656,6 +659,7 @@ rule germline__gridss_virusbreakend:
     container:
         config['container']['gridss']
     shell:
+        "rm -rf {params.dir} \n"
         "mkdir -p {params.dir} \n"
         "cd {params.dir} \n"
         "ln -s {config[references][gatkbundle]}/Homo_sapiens_assembly38.fasta \n"
