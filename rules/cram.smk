@@ -12,6 +12,7 @@ rule cram__check_md5:
         md5 = lambda wildcards: dic_run[wildcards.run]['MD5'],
     threads:
         int(allocated("threads", "cram__check_md5", cluster))
+    max_attempts: 3
     container:
         config['container']['samtools']
     shell:
@@ -49,6 +50,7 @@ rule cram_merge_sample:
         err = join(config['pipelinedir'], "logs", "merge_sample_cram", "{sample}.e"),
     threads:
         int(allocated("threads", "cram_merge_sample", cluster))
+    max_attempts: 3
     container:
         config['container']['samtools']
     shell:
@@ -77,6 +79,7 @@ rule cram__to_bam:
         folder = join(config['workdir'], "02.bam", "{sample}"),
     threads:
         int(allocated("threads", "cram__to_bam", cluster))
+    max_attempts: 3
     container:
         config['container']['samtools']
     shell:
@@ -99,6 +102,7 @@ rule cram__to_chrm:
         folder = join(config['workdir'], "03.chrM", "{sample}"),
     threads:
         int(allocated("threads", "cram__to_chrm", cluster))
+    max_attempts: 3
     container:
         config['container']['samtools']
     shell:
@@ -122,6 +126,7 @@ rule cram__verifybamid2:
         prefix = "{sample}"
     threads:
         int(allocated("threads", "cram__verifybamid2", cluster))
+    max_attempts: 3
     container:
         config['container']['verifybamid2']
     shell:
