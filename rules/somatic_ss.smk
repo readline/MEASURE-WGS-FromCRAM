@@ -4,7 +4,7 @@ rule somatic_ss__mutect2_split:
     input:
         cram = join(config['workdir'], "01.cram", "{sample}", "{sample}.cram"),
     output:
-        vcf = temp(join(config['workdir'], "41.somatic_ss_snvindel_mutect2", "{sample}", "chroms", "{sample}.{chr}.mutect2.flt.vcf")),
+        vcfgz = temp(join(config['workdir'], "41.somatic_ss_snvindel_mutect2", "{sample}", "chroms", "{sample}.{chr}.mutect2.flt.vcf.gz")),
     params:
         vcf = join(config['workdir'], "41.somatic_ss_snvindel_mutect2", "{sample}", "chroms", "{sample}.{chr}.mutect2.vcf"),
         f1r2 = join(config['workdir'], "41.somatic_ss_snvindel_mutect2", "{sample}", "chroms", "{sample}.{chr}.f1r2.tar.gz"),
@@ -12,6 +12,7 @@ rule somatic_ss__mutect2_split:
         pst = join(config['workdir'], "41.somatic_ss_snvindel_mutect2", "{sample}", "chroms", "{sample}.{chr}.getpileupsummaries.table"),
         ct = join(config['workdir'], "41.somatic_ss_snvindel_mutect2", "{sample}", "chroms", "{sample}.{chr}.calculatecontamination.table"),
         st = join(config['workdir'], "41.somatic_ss_snvindel_mutect2", "{sample}", "chroms", "{sample}.{chr}.segments.table"),
+        vcff = temp(join(config['workdir'], "41.somatic_ss_snvindel_mutect2", "{sample}", "chroms", "{sample}.{chr}.mutect2.flt.vcf")),
     log:
         out = join(config['pipelinedir'], "logs", "somatic_ss__mutect2_split", "{sample}.{chr}.o"),
         err = join(config['pipelinedir'], "logs", "somatic_ss__mutect2_split", "{sample}.{chr}.e"),
@@ -50,20 +51,22 @@ rule somatic_ss__mutect2_split:
         "    -V {params.vcf} "
         "    --tumor-segmentation {params.st} "
         "    --ob-priors {params.rom} "
-        "    -O {output.vcf} "
+        "    -O {output.vcff} "
         "    >> {log.out} 2>> {log.err}\n"
+        "bcftools view -O z -o {output.vcfgz} {params.vcff}"
+        "    >> {log.out} 2>> {log.err}\n"
+        "tabix -p vcf {output.vcfgz}"
 
 rule somatic_ss__mutect2_merge:
     input:
-        tbis =lambda wildcards: \
-             ["{}/41.somatic_ss_snvindel_mutect2/{}/chroms/{}.{}.mutect2.flt.vcf.gz.tbi".format(config['workdir'], wildcards.sample, wildcards.sample, chrid) for chrid in ['chr%d'%(i) for i in range(1,23)]+['chrX','chrY']],
+        vcfs =lambda wildcards: \
+             ["{}/41.somatic_ss_snvindel_mutect2/{}/chroms/{}.{}.mutect2.flt.vcf.gz".format(config['workdir'], wildcards.sample, wildcards.sample, chrid) for chrid in ['chr%d'%(i) for i in range(1,23)]+['chrX','chrY']],
     output:
         vcf  = join(config['workdir'], "41.somatic_ss_snvindel_mutect2", "{sample}", "{sample}.mutect2.vcf.gz"),
         vcfp = join(config['workdir'], "41.somatic_ss_snvindel_mutect2", "{sample}", "{sample}.mutect2.pass.vcf.gz"),
     params:
         dir  = join(config['workdir'], "41.somatic_ss_snvindel_mutect2", "{sample}"),
         vcf0  = join(config['workdir'], "41.somatic_ss_snvindel_mutect2", "{sample}", "{sample}.mutect2.tmp.vcf.gz"),
-        inputvcfs=lambda wildcards, input: " ".join(" {} ".format(in_.replace('.tbi','')) for in_ in input.tbis),
     log:
         out = join(config['pipelinedir'], "logs", "somatic_ss__mutect2_merge", "{sample}.o"),
         err = join(config['pipelinedir'], "logs", "somatic_ss__mutect2_merge", "{sample}.e"),
@@ -77,7 +80,7 @@ rule somatic_ss__mutect2_merge:
         "    -a "
         "    -O z "
         "    -o {params.vcf0} "
-        "    {params.inputvcfs} "
+        "    {input.inputvcfs} "
         "    > {log.out} 2> {log.err}\n"
         "echo {wildcards.sample} > samplename.txt\n"
         "bcftools reheader "
@@ -157,7 +160,7 @@ rule somatic_ss__octopus_merge:
         "bcftools concat "
         "    -a "
         "    -O z "
-        "    -o {params.vcf} "
+        "    -o {params.vcf0} "
         "    {params.inputvcfs} "
         "    > {log.out} 2> {log.err}\n"
         "echo {wildcards.sample} > samplename.txt\n"
