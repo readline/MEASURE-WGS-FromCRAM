@@ -147,7 +147,7 @@ germline__gatk_hcmerge:
 germline__gdbimport:
     partition: 'norm'
     threads: 4
-    mem: '16g'
+    mem: '32g'
     time: '2-00:00:00'
     extra: ' --gres=lscratch:40'
 
@@ -194,7 +194,7 @@ germline__gridss_call:
     extra: ' --gres=lscratch:50'
 
 germline__gridss_virusbreakend:
-    partition: 'norm'
+    partition: 'norm,quick'
     threads: 32
     mem: '64g'
     time: '2-00:00:00'
@@ -314,8 +314,8 @@ somatic_ss__gridss_annot:
 
 somatic_ss__dellysv:
     partition: 'norm'
-    threads: 16
-    mem: '64g'
+    threads: 4
+    mem: '48g'
     time: '2-00:00:00'
     extra: ' --gres=lscratch:50'
 
@@ -414,7 +414,7 @@ somatic_tn__strelka:
     partition: 'norm'
     threads: 24
     mem: '48g'
-    time: '24-00:00:00'
+    time: '2-00:00:00'
     extra: ' --gres=lscratch:50'
 
 somatic_tn__manta:
@@ -473,8 +473,8 @@ somatic_tn__gripss:
 
 somatic_tn__dellysv:
     partition: 'norm'
-    threads: 16
-    mem: '72g'
+    threads: 4
+    mem: '48g'
     time: '2-00:00:00'
     extra: ' --gres=lscratch:50'
 
