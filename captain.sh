@@ -28,10 +28,10 @@ echo [[SNAPSHOT]] > [[WORKDIR]]/Pipe_runtime/current_snapshot
 snakemake --snakefile Snakefile -d "[[WORKDIR]]" \
   --cores 8 \
   --local-cores 8 \
-  --jobs 2000 \
+  --jobs 1800 \
   --latency-wait 120 all \
   --max-jobs-per-second 1 \
-  --max-status-checks-per-second 0.01 \
+  --max-status-checks-per-second 10 \
   --use-singularity \
   --singularity-args "-B [[BINDPATH]]" \
   --configfile="[[WORKDIR]]/Pipe_runtime/[[SNAPSHOT]]/config.yaml" \
