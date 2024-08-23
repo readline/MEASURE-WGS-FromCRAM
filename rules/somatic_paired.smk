@@ -5,7 +5,7 @@ rule somatic_tn__mutect2_split:
         cram = join(config['workdir'], "01.cram", "{sample}", "{sample}.cram"),
         cram0 = lambda wildcards: "{}/01.cram/{}/{}.cram".format(config['workdir'], dic_tumor_to_normal[wildcards.sample], dic_tumor_to_normal[wildcards.sample]),
     output:
-        vcf = temp(join(config['workdir'], "31.somatic_tn_snvindel_mutect2", "{sample}", "chroms", "{sample}.{chr}.mutect2.flt.vcf")),
+        vcfgz = temp(join(config['workdir'], "31.somatic_tn_snvindel_mutect2", "{sample}", "chroms", "{sample}.{chr}.mutect2.flt.vcf.gz")),
     params:
         normal = lambda wildcards: dic_tumor_to_normal[wildcards.sample],
         vcf = join(config['workdir'], "31.somatic_tn_snvindel_mutect2", "{sample}", "chroms", "{sample}.{chr}.mutect2.vcf"),
@@ -14,6 +14,7 @@ rule somatic_tn__mutect2_split:
         pst = join(config['workdir'], "31.somatic_tn_snvindel_mutect2", "{sample}", "chroms", "{sample}.{chr}.getpileupsummaries.table"),
         ct = join(config['workdir'], "31.somatic_tn_snvindel_mutect2", "{sample}", "chroms", "{sample}.{chr}.calculatecontamination.table"),
         st = join(config['workdir'], "31.somatic_tn_snvindel_mutect2", "{sample}", "chroms", "{sample}.{chr}.segments.table"),
+        vcff = temp(join(config['workdir'], "31.somatic_tn_snvindel_mutect2", "{sample}", "chroms", "{sample}.{chr}.mutect2.flt.vcf")),
     log:
         out = join(config['pipelinedir'], "logs", "somatic_tn__mutect2_split", "{sample}.{chr}.o"),
         err = join(config['pipelinedir'], "logs", "somatic_tn__mutect2_split", "{sample}.{chr}.e"),
@@ -57,13 +58,17 @@ rule somatic_tn__mutect2_split:
         "    -V {params.vcf} "
         "    --tumor-segmentation {params.st} "
         "    --ob-priors {params.rom} "
-        "    -O {output.vcf} "
+        "    -O {params.vcff} "
+        "    >> {log.out} 2>> {log.err}\n"
+        "bcftools view -O z -o {output.vcfgz} {params.vcff}"
+        "    >> {log.out} 2>> {log.err}\n"
+        "tabix -p vcf {output.vcfgz}"
         "    >> {log.out} 2>> {log.err}\n"
 
 rule somatic_tn__mutect2_merge:
     input:
-        tbis =lambda wildcards: \
-             ["{}/31.somatic_tn_snvindel_mutect2/{}/chroms/{}.{}.mutect2.flt.vcf.gz.tbi".format(config['workdir'], wildcards.sample, wildcards.sample, chrid) for chrid in ['chr%d'%(i) for i in range(1,23)]+['chrX','chrY']],
+        vcfs =lambda wildcards: \
+             ["{}/31.somatic_tn_snvindel_mutect2/{}/chroms/{}.{}.mutect2.flt.vcf.gz".format(config['workdir'], wildcards.sample, wildcards.sample, chrid) for chrid in ['chr%d'%(i) for i in range(1,23)]+['chrX','chrY']],
     output:
         vcf  = join(config['workdir'], "31.somatic_tn_snvindel_mutect2", "{sample}", "{sample}.mutect2.vcf.gz"),
         vcfp = join(config['workdir'], "31.somatic_tn_snvindel_mutect2", "{sample}", "{sample}.mutect2.pass.vcf.gz"),
@@ -73,7 +78,6 @@ rule somatic_tn__mutect2_merge:
         sample_sid = lambda wildcards: dic_sample_to_sid[wildcards.sample],
         normal_sid = lambda wildcards: dic_sample_to_sid[dic_tumor_to_normal[wildcards.sample]],
         vcf0  = join(config['workdir'], "31.somatic_tn_snvindel_mutect2", "{sample}", "{sample}.mutect2.tmp.vcf.gz"),
-        inputvcfs=lambda wildcards, input: " ".join(" {} ".format(in_.replace('.tbi','')) for in_ in input.tbis),
     log:
         out = join(config['pipelinedir'], "logs", "somatic_tn__mutect2_merge", "{sample}.o"),
         err = join(config['pipelinedir'], "logs", "somatic_tn__mutect2_merge", "{sample}.e"),
@@ -87,7 +91,7 @@ rule somatic_tn__mutect2_merge:
         "    -a "
         "    -O z "
         "    -o {params.vcf0} "
-        "    {params.inputvcfs} "
+        "    {input.vcfs} "
         "    > {log.out} 2> {log.err}\n"
         "echo {params.sample_sid} {wildcards.sample} > samplename.txt\n"
         "echo {params.normal_sid} {params.normal} >> samplename.txt\n"
@@ -210,7 +214,7 @@ rule somatic_tn__muse_sump:
     input:
         txt = join(config['workdir'], "33.somatic_snv_muse", "{sample}", "{sample}.MuSE.txt"),
     output:
-        vcf = join(config['workdir'], "33.somatic_snv_muse", "{sample}", "{sample}.MuSE.vcf"),
+        vcf = join(config['workdir'], "33.somatic_snv_muse", "{sample}", "{sample}.MuSE.vcf.gz"),
     params:
         dir = join(config['workdir'], "33.somatic_snv_muse", "{sample}"),
         prefix = join(config['workdir'], "33.somatic_snv_muse", "{sample}", "{sample}"),
@@ -224,30 +228,35 @@ rule somatic_tn__muse_sump:
     shell:
         "cd {params.dir}\n"
         "cat {input.txt} |grep -E '^#|^chr1|^chr2|^chr3|^chr4|^chr5|^chr6|^chr7|^chr8|^chr9|^chr10|^chr11|^chr12|^chr13|^chr14|^chr15|^chr16|^chr17|^chr18|^chr19|^chr20|^chr21|^chr22|^chrX|^chrY|^chrM'"
-        "  > {params.prefix.MuSE.main.txt} 2> {log.err} \n"
+        "  > {params.prefix}.MuSE.main.txt 2> {log.err} \n"
         "/MuSE/bin/MuSE sump "
-        "    -I {params.prefix.MuSE.main.txt} "
+        "    -I {params.prefix}.MuSE.main.txt "
         "    -n {threads}"
         "    -G "
         "    -D Homo_sapiens_assembly38.dbsnp138.vcf.gz "
         "    -O {params.prefix}.MuSE.vcf"
         " > {log.out} 2> {log.err} \n"
+        "bgzip {params.prefix}.MuSE.vcf"
+        " >> {log.out} 2>> {log.err} \n"
+        "tabix -p vcf {params.prefix}.MuSE.vcf.gz"
+        " >> {log.out} 2>> {log.err} \n"
         "gzip {input.txt}"
         " >> {log.out} 2>> {log.err}\n"
-        "rm {params.prefix.MuSE.main.txt}"
+        "rm {params.prefix}.MuSE.main.txt"
         " >> {log.out} 2>> {log.err}\n"
         "rm Homo_sapiens_assembly38.dbsnp138.vcf.gz*"
         " >> {log.out} 2>> {log.err}\n"
 
 rule somatic_tn__muse_post:
     input:
-        vcf = join(config['workdir'], "33.somatic_snv_muse", "{sample}", "{sample}.MuSE.vcf.gz.tbi"),
+        vcf = join(config['workdir'], "33.somatic_snv_muse", "{sample}", "{sample}.MuSE.vcf.gz"),
     output:
         vcfp  = join(config['workdir'], "33.somatic_snv_muse", "{sample}", "{sample}.MuSE.pass.vcf.gz"),
     params:
         dir = join(config['workdir'], "33.somatic_snv_muse", "{sample}"),
         vcf = join(config['workdir'], "33.somatic_snv_muse", "{sample}", "{sample}.MuSE.vcf.gz"),
         vcf0  = join(config['workdir'], "33.somatic_snv_muse", "{sample}", "{sample}.MuSE.tmp.vcf.gz"),
+        normal = lambda wildcards: dic_tumor_to_normal[wildcards.sample],
     log:
         out = join(config['pipelinedir'], "logs", "somatic_tn__muse_post", "{sample}.o"),
         err = join(config['pipelinedir'], "logs", "somatic_tn__muse_post", "{sample}.e"),

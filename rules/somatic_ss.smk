@@ -51,11 +51,12 @@ rule somatic_ss__mutect2_split:
         "    -V {params.vcf} "
         "    --tumor-segmentation {params.st} "
         "    --ob-priors {params.rom} "
-        "    -O {output.vcff} "
+        "    -O {params.vcff} "
         "    >> {log.out} 2>> {log.err}\n"
         "bcftools view -O z -o {output.vcfgz} {params.vcff}"
         "    >> {log.out} 2>> {log.err}\n"
         "tabix -p vcf {output.vcfgz}"
+        "    >> {log.out} 2>> {log.err}\n"
 
 rule somatic_ss__mutect2_merge:
     input:
@@ -80,7 +81,7 @@ rule somatic_ss__mutect2_merge:
         "    -a "
         "    -O z "
         "    -o {params.vcf0} "
-        "    {input.inputvcfs} "
+        "    {input.vcfs} "
         "    > {log.out} 2> {log.err}\n"
         "echo {wildcards.sample} > samplename.txt\n"
         "bcftools reheader "
@@ -107,9 +108,10 @@ rule somatic_ss__octopus_split:
     input:
         bam = join(config['workdir'], "02.bam", "{sample}", "{sample}.bam"),
     output:
-        vcf = temp(join(config['workdir'], "42.somatic_ss_snvindel_octopus", "{sample}", "itvs", "{sample}.{itv}.octopus.vcf")),
+        vcfgz = temp(join(config['workdir'], "42.somatic_ss_snvindel_octopus", "{sample}", "itvs", "{sample}.{itv}.octopus.vcf.gz")),
     params:
         dir = join(config['workdir'], "42.somatic_ss_snvindel_octopus", "{sample}", "itvs", "{itv}"),
+        vcf = join(config['workdir'], "42.somatic_ss_snvindel_octopus", "{sample}", "itvs", "{sample}.{itv}.octopus.vcf"),
     log:
         out = join(config['pipelinedir'], "logs", "somatic_ss__octopus_split", "{sample}.{itv}.o"),
         err = join(config['pipelinedir'], "logs", "somatic_ss__octopus_split", "{sample}.{itv}.e"),
@@ -130,17 +132,19 @@ rule somatic_ss__octopus_split:
         "    --temp-directory-prefix tmp "
         "    -R {config[references][gatkbundle]}/Homo_sapiens_assembly38.fasta "
         "    -I {input.bam} "
-        "    -o {output.vcf} "
+        "    -o {params.vcf} "
         "    --forest-model /opt/octopus/resources/forests/germline.v0.7.4.forest "
         "    --somatic-forest-model /opt/octopus/resources/forests/somatic.v0.7.4.forest "
         "    --annotations AC AD DP "
         "    -t {wildcards.itv}.bed "
-        "    > {log.out} 2> {log.err}\n"
+        "    > {log.out} 2>> {log.err}\n"
+        "bcftools view -O z -W -o {output.vcfgz} {params.vcf}"
+        "    >> {log.out} 2>> {log.err}\n"
 
 rule somatic_ss__octopus_merge:
     input:
-        tbis =lambda wildcards: \
-             ["{}/42.somatic_ss_snvindel_octopus/{}/itvs/{}.{}.octopus.vcf.gz.tbi".format(config['workdir'], wildcards.sample, wildcards.sample, itv) \
+        vcfs =lambda wildcards: \
+             ["{}/42.somatic_ss_snvindel_octopus/{}/itvs/{}.{}.octopus.vcf.gz".format(config['workdir'], wildcards.sample, wildcards.sample, itv) \
              for itv in ['temp_%.4d_of_%d'%(i,config['parameter']['vardict']) for i in range(1,config['parameter']['vardict']+1)]],
     output:
         vcf  = join(config['workdir'], "42.somatic_ss_snvindel_octopus", "{sample}", "{sample}.octopus.vcf.gz"),
@@ -148,7 +152,6 @@ rule somatic_ss__octopus_merge:
     params:
         dir  = join(config['workdir'], "42.somatic_ss_snvindel_octopus", "{sample}"),
         vcf0 = join(config['workdir'], "42.somatic_ss_snvindel_octopus", "{sample}", "{sample}.octopus.tmp.vcf.gz"),
-        inputvcfs=lambda wildcards, input: " ".join(" {} ".format(in_.replace('.tbi','')) for in_ in input.tbis),
     log:
         out = join(config['pipelinedir'], "logs", "somatic_ss__octopus_merge", "{sample}.o"),
         err = join(config['pipelinedir'], "logs", "somatic_ss__octopus_merge", "{sample}.e"),
@@ -161,7 +164,7 @@ rule somatic_ss__octopus_merge:
         "    -a "
         "    -O z "
         "    -o {params.vcf0} "
-        "    {params.inputvcfs} "
+        "    {input.vcfs} "
         "    > {log.out} 2> {log.err}\n"
         "echo {wildcards.sample} > samplename.txt\n"
         "bcftools reheader "
@@ -188,6 +191,7 @@ rule somatic_ss__vardict_split:
         bam = join(config['workdir'], "02.bam", "{sample}", "{sample}.bam"),
     output:
         vcf = temp(join(config['workdir'], "43.somatic_ss_snvindel_vardict", "{sample}", "itvs", "{sample}.{itv}.vardict.vcf")),
+        vcfgz = join(config['workdir'], "43.somatic_ss_snvindel_vardict", "{sample}", "itvs", "{sample}.{itv}.vardict.vcf.gz"),
     params:
         dir = join(config['workdir'], "43.somatic_ss_snvindel_vardict", "{sample}", "itvs"),
         temp= "/lscratch/$SLURM_JOB_ID/{sample}.{itv}.txt"
@@ -227,18 +231,19 @@ rule somatic_ss__vardict_split:
         "    {params.temp} "
         "    > {output.vcf} "
         "    2>> {log.err}\n"
+        "bcftools view -O z -W -o {output.vcfgz} {output.vcf}"
+        "   >> {log.out}  2>> {log.err}\n"
 
 rule somatic_ss__vardict_merge:
     input:
-        tbis =lambda wildcards: \
-             ["{}/43.somatic_ss_snvindel_vardict/{}/itvs/{}.{}.vardict.vcf.gz.tbi".format(config['workdir'], wildcards.sample, wildcards.sample, itv) \
+        vcfs =lambda wildcards: \
+             ["{}/43.somatic_ss_snvindel_vardict/{}/itvs/{}.{}.vardict.vcf.gz".format(config['workdir'], wildcards.sample, wildcards.sample, itv) \
                 for itv in ['temp_%.4d_of_%d'%(i,config['parameter']['vardict']) for i in range(1,config['parameter']['vardict']+1)]],
     output:
         vcf  = join(config['workdir'], "43.somatic_ss_snvindel_vardict", "{sample}", "{sample}.vardict.vcf.gz"),
         vcfp = join(config['workdir'], "43.somatic_ss_snvindel_vardict", "{sample}", "{sample}.vardict.pass.vcf.gz"),
     params:
         dir  = join(config['workdir'], "43.somatic_ss_snvindel_vardict", "{sample}"),
-        inputvcfs=lambda wildcards, input: " ".join(" {} ".format(in_.replace('.tbi','')) for in_ in input.tbis),
     log:
         out = join(config['pipelinedir'], "logs", "somatic_ss__vardict_merge", "{sample}.o"),
         err = join(config['pipelinedir'], "logs", "somatic_ss__vardict_merge", "{sample}.e"),
@@ -251,7 +256,7 @@ rule somatic_ss__vardict_merge:
         "    -a "
         "    -O z "
         "    -o {output.vcf} "
-        "    {params.inputvcfs} "
+        "    {input.vcfs} "
         "    > {log.out} 2> {log.err}\n"
         "bcftools view "
         "    -f 'PASS' "

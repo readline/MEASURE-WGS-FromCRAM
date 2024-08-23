@@ -670,12 +670,13 @@ rule germline__gridss_virusbreakend:
         "  --db {config[references][virusbreakend]} "
         "  {input.bam}"
         "  > {log.out} 2> {log.err}\n"
-        "bcftools view -W -O z -o {output.vcfgz} {output.vcf}"
+        "bcftools view -W -O z -o {output.vcfgz} --write-index {output.vcf}"
         "  >> {log.out} 2>> {log.err}\n"
-        "bcftools view -W -O z -f PASS -o {output.vcfpgz} {output.vcf}"
+        "bcftools view -W -O z -f PASS -o {output.vcfpgz} --write-index {output.vcf}"
         "  >> {log.out} 2>> {log.err}\n"
         "cd .. \n"
         "rm -rf tmp"
+        "  >> {log.out} 2>> {log.err}\n"
 
 rule germline__gripss_germline:
     input:
