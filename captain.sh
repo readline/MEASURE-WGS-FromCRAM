@@ -28,7 +28,7 @@ echo [[SNAPSHOT]] > [[WORKDIR]]/Pipe_runtime/current_snapshot
 snakemake --snakefile Snakefile -d "[[WORKDIR]]" \
   --cores 8 \
   --local-cores 8 \
-  --jobs 1800 \
+  --jobs 1900 \
   --latency-wait 120 all \
   --max-jobs-per-second 1 \
   --max-status-checks-per-second 10 \
