@@ -131,6 +131,12 @@ rule somatic_tn__strelka:
     container:
         config['container']['strelka']
     shell:
+        "rm -rf {params.dir}"
+        "  > {log.out} 2> {log.err}\n"
+        "mkdir -p {params.dir}"
+        "  >> {log.out} 2>> {log.err}\n"
+        "cd {params.dir}"
+        "  >> {log.out} 2>> {log.err}\n"
         "configureStrelkaSomaticWorkflow.py"
         "  --normalBam {input.cram0}"
         "  --tumorBam {input.cram}"
@@ -138,8 +144,7 @@ rule somatic_tn__strelka:
         "  --indelCandidates {input.manta}"
         "  --runDir {params.dir}"
         "  --outputCallableRegions"
-        "  > {log.out} 2> {log.err}\n"
-        "cd {params.dir} \n"
+        "  >> {log.out} 2>> {log.err}\n"
         "./runWorkflow.py"
         "  -m local"
         "  -j {threads}"
