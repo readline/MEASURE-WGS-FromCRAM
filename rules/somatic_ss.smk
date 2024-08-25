@@ -675,6 +675,7 @@ rule somatic_ss__canvas_annot:
         config['container']['annotsv']
     shell:
         "bcftools view -O z -W -f PASS -o {output.vcfp} {input.vcf}"
+        "  > {log.out} 2> {log.err}\n"
         "AnnotSV "
         "   -SVinputFile {output.vcfp} "
         "   -annotationsDir {config[references][annotsv]} "
@@ -691,4 +692,4 @@ rule somatic_ss__canvas_annot:
         "   -overlap 70 "
         "   -snvIndelFiles {input.deepvariant} "
         "   -snvIndelPASS 1 "
-        "  > {log.out} 2> {log.err}\n"
+        "  >> {log.out} 2>> {log.err}\n"
