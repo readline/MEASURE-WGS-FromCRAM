@@ -138,7 +138,9 @@ rule somatic_ss__octopus_split:
         "    --annotations AC AD DP "
         "    -t {wildcards.itv}.bed "
         "    > {log.out} 2>> {log.err}\n"
-        "bcftools view -O z -W -o {output.vcfgz} {params.vcf}"
+        "bcftools view -O z -o {output.vcfgz} {params.vcf}"
+        "    >> {log.out} 2>> {log.err}\n"
+        "tabix -p vcf {output.vcfgz}"
         "    >> {log.out} 2>> {log.err}\n"
 
 rule somatic_ss__octopus_merge:

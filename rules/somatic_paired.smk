@@ -160,6 +160,7 @@ rule somatic_tn__manta:
     output:
         vgz = join(config['workdir'], "34.somatic_sv_manta", "{sample}", "results", "variants", "candidateSV.vcf.gz"),
         indel = join(config['workdir'], "34.somatic_sv_manta", "{sample}", "results", "variants", "candidateSmallIndels.vcf.gz"),
+        somvgz = join(config['workdir'], "34.somatic_sv_manta", "{sample}", "results", "variants", "somaticSV.vcf.gz"),
     params:
         dir = join(config['workdir'], "34.somatic_sv_manta", "{sample}"),
     log:
@@ -183,6 +184,38 @@ rule somatic_tn__manta:
         "  >> {log.out} 2>> {log.err}\n"
         "rm -rf workspace"
         "  >> {log.out} 2>> {log.err}\n"
+
+rule somatic_tn__manta_annot:
+    input:
+        vcf = join(config['workdir'], "34.somatic_sv_manta", "{sample}", "results", "variants", "somaticSV.vcf.gz"),
+    output:
+        annot = join(config['workdir'], "34.somatic_sv_manta", "{sample}", "AnnotSV", "{sample}.manta.somatic.tsv"),
+    params:
+        annotdir = join(config['workdir'], "34.somatic_sv_manta", "{sample}", "AnnotSV"),
+        annotfile= "{sample}.manta.somatic.tsv",
+    log:
+        out = join(config['pipelinedir'], "logs", "somatic_tn__manta_annot", "{sample}.o"),
+        err = join(config['pipelinedir'], "logs", "somatic_tn__manta_annot", "{sample}.e"),
+    threads:
+        int(allocated("threads", "somatic_tn__manta_annot", cluster))
+    container:
+        config['container']['annotsv']
+    shell:
+        "AnnotSV "
+        "   -SVinputFile {input.vcf} "
+        "   -annotationsDir {config[references][annotsv]} "
+        "   -bedtools bedtools "
+        "   -bcftools bcftools "
+        "   -annotationMode full "
+        "   -genomeBuild GRCh38 "
+        "   -includeCI 1 "
+        "   -overwrite 1 "
+        "   -outputFile {params.annotfile} "
+        "   -outputDir {params.annotdir} "
+        "   -SVinputInfo 1 "
+        "   -SVminSize 50 "
+        "   -overlap 70 "
+        "  > {log.out} 2> {log.err}\n"
 
 
 rule somatic_tn__muse:
@@ -410,6 +443,38 @@ rule somatic_tn__gripss:
         "  -output_dir {params.dir}"
         "  > {log.out} 2> {log.err}\n"
 
+rule somatic_tn__gripss_annot:
+    input:
+        vcf = join(config['workdir'], "35.somatic_tn_sv__gridss", "{sample}", "{sample}.gripss.filtered.vcf.gz"),
+    output:
+        annot = join(config['workdir'], "35.somatic_tn_sv__gridss", "{sample}", "AnnotSV", "{sample}.gripss.somatic.tsv"),
+    params:
+        annotdir = join(config['workdir'], "35.somatic_tn_sv__gridss", "{sample}", "AnnotSV"),
+        annotfile= "{sample}.gripss.somatic",
+    log:
+        out = join(config['pipelinedir'], "logs", "somatic_tn__gripss_annot", "{sample}.o"),
+        err = join(config['pipelinedir'], "logs", "somatic_tn__gripss_annot", "{sample}.e"),
+    threads:
+        int(allocated("threads", "somatic_tn__gripss_annot", cluster))
+    container:
+        config['container']['annotsv']
+    shell:
+        "AnnotSV "
+        "   -SVinputFile {input.vcf} "
+        "   -annotationsDir {config[references][annotsv]} "
+        "   -bedtools bedtools "
+        "   -bcftools bcftools "
+        "   -annotationMode full "
+        "   -genomeBuild GRCh38 "
+        "   -includeCI 1 "
+        "   -overwrite 1 "
+        "   -outputFile {params.annotfile} "
+        "   -outputDir {params.annotdir} "
+        "   -SVinputInfo 1 "
+        "   -SVminSize 50 "
+        "   -overlap 70 "
+        "  > {log.out} 2> {log.err}\n"
+
 rule somatic_tn__dellysv:
     input:
         cram = join(config['workdir'], "01.cram", "{sample}", "{sample}.cram"),
@@ -541,6 +606,56 @@ rule somatic_tn__dellysv_post:
         "bcftools view {input.genobcf} | bgzip > {output.gvcf}"
         "  2>> {log.err}\n"
         "tabix -p vcf {output.gvcf}"
+        "  >> {log.out} 2>> {log.err}\n"
+
+rule somatic_tn__dellysv_annot:
+    input:
+        vcf = join(config['workdir'], "36.somatic_tn_sv__delly", "JointCalls", "Merge.delly.somatic.vcf.gz"),
+        vcfg = join(config['workdir'], "36.somatic_tn_sv__delly", "JointCalls", "Merge.delly.germline.vcf.gz"),
+    output:
+        annot = join(config['workdir'], "36.somatic_tn_sv__delly", "JointCalls",  "AnnotSV", "Merge.delly.somatic.tsv"),
+        annotg = join(config['workdir'], "36.somatic_tn_sv__delly", "JointCalls",  "AnnotSV", "Merge.delly.germline.tsv"),
+    params:
+        annotdir = join(config['workdir'], "36.somatic_tn_sv__delly", "JointCalls",  "AnnotSV"),
+        annotfile1= "Merge.delly.somatic",
+        annotfile2= "Merge.delly.germline",
+    log:
+        out = join(config['pipelinedir'], "logs", "somatic_tn__dellysv_annot", "AnnotSV.o"),
+        err = join(config['pipelinedir'], "logs", "somatic_tn__dellysv_annot", "AnnotSV.e"),
+    threads:
+        int(allocated("threads", "somatic_tn__dellysv_annot", cluster))
+    container:
+        config['container']['annotsv']
+    shell:
+        "AnnotSV "
+        "   -SVinputFile {input.vcf} "
+        "   -annotationsDir {config[references][annotsv]} "
+        "   -bedtools bedtools "
+        "   -bcftools bcftools "
+        "   -annotationMode full "
+        "   -genomeBuild GRCh38 "
+        "   -includeCI 1 "
+        "   -overwrite 1 "
+        "   -outputFile {params.annotfile1} "
+        "   -outputDir {params.annotdir} "
+        "   -SVinputInfo 1 "
+        "   -SVminSize 50 "
+        "   -overlap 70 "
+        "  > {log.out} 2> {log.err}\n"
+        "AnnotSV "
+        "   -SVinputFile {input.vcfg} "
+        "   -annotationsDir {config[references][annotsv]} "
+        "   -bedtools bedtools "
+        "   -bcftools bcftools "
+        "   -annotationMode full "
+        "   -genomeBuild GRCh38 "
+        "   -includeCI 1 "
+        "   -overwrite 1 "
+        "   -outputFile {params.annotfile2} "
+        "   -outputDir {params.annotdir} "
+        "   -SVinputInfo 1 "
+        "   -SVminSize 50 "
+        "   -overlap 70 "
         "  >> {log.out} 2>> {log.err}\n"
 
 rule somatic_tn__amber:

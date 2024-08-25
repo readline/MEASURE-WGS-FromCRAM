@@ -433,7 +433,7 @@ rule germline__manta:
     input:
         cram = join(config['workdir'], "01.cram", "{sample}", "{sample}.cram"),
     output:
-        vgz = join(config['workdir'], "13.germline_sv_manta", "{sample}", "results", "variants", "candidateSV.vcf.gz"),
+        vgz = join(config['workdir'], "13.germline_sv_manta", "{sample}", "results", "variants", "diploidSV.vcf.gz"),
         indel = join(config['workdir'], "13.germline_sv_manta", "{sample}", "results", "variants", "candidateSmallIndels.vcf.gz"),
     params:
         dir = join(config['workdir'], "13.germline_sv_manta", "{sample}"),
@@ -457,6 +457,38 @@ rule germline__manta:
         "  >> {log.out} 2>> {log.err}\n"
         "rm -rf workspace"
         "  >> {log.out} 2>> {log.err}\n"
+
+rule germline__manta_annot:
+    input:
+        vcf = join(config['workdir'], "13.germline_sv_manta", "{sample}", "results", "variants", "diploidSV.vcf.gz"),
+    output:
+        annot = join(config['workdir'], "13.germline_sv_manta", "{sample}", "AnnotSV", "{sample}.manta.germline.tsv"),
+    params:
+        annotdir = join(config['workdir'], "13.germline_sv_manta", "{sample}", "AnnotSV"),
+        annotfile= "{sample}.manta.germline",
+    log:
+        out = join(config['pipelinedir'], "logs", "germline__manta_annot", "{sample}.o"),
+        err = join(config['pipelinedir'], "logs", "germline__manta_annot", "{sample}.e"),
+    threads:
+        int(allocated("threads", "germline__manta_annot", cluster))
+    container:
+        config['container']['annotsv']
+    shell:
+        "AnnotSV "
+        "   -SVinputFile {input.vcf} "
+        "   -annotationsDir {config[references][annotsv]} "
+        "   -bedtools bedtools "
+        "   -bcftools bcftools "
+        "   -annotationMode full "
+        "   -genomeBuild GRCh38 "
+        "   -includeCI 1 "
+        "   -overwrite 1 "
+        "   -outputFile {params.annotfile} "
+        "   -outputDir {params.annotdir} "
+        "   -SVinputInfo 1 "
+        "   -SVminSize 50 "
+        "   -overlap 70 "
+        "  > {log.out} 2> {log.err}\n"
 
 
 rule germline__tiddit:
@@ -646,10 +678,10 @@ rule germline__gridss_virusbreakend:
     input:
         bam = join(config['workdir'], "02.bam", "{sample}", "{sample}.bam"),
     output:
-        vcf = temp(join(config['workdir'], "16.germline_sv_virusbreakend", "{sample}", "{sample}.virusbreakend.vcf")),
         vcfgz = join(config['workdir'], "16.germline_sv_virusbreakend", "{sample}", "{sample}.virusbreakend.vcf.gz"),
         vcfpgz = join(config['workdir'], "16.germline_sv_virusbreakend", "{sample}", "{sample}.virusbreakend.pass.vcf.gz"),
     params:
+        vcf = join(config['workdir'], "16.germline_sv_virusbreakend", "{sample}", "{sample}.virusbreakend.vcf"),
         dir = join(config['workdir'], "16.germline_sv_virusbreakend", "{sample}", "tmp"),
     log:
         out = join(config['pipelinedir'], "logs", "germline__gridss_virusbreakend", "{sample}.o"),
@@ -666,17 +698,23 @@ rule germline__gridss_virusbreakend:
         "virusbreakend "
         "  -r Homo_sapiens_assembly38.fasta "
         "  -j /usr/local/share/gridss-2.13.2-3/gridss.jar "
-        "  -o {output.vcf} "
+        "  -o {params.vcf} "
         "  --db {config[references][virusbreakend]} "
         "  {input.bam}"
         "  > {log.out} 2> {log.err}\n"
-        "bcftools view -W -O z -o {output.vcfgz} --write-index {output.vcf}"
+        "echo 1111111111 >> {log.out} \n"
+        "bgzip {params.vcf}"
         "  >> {log.out} 2>> {log.err}\n"
-        "bcftools view -W -O z -f PASS -o {output.vcfpgz} --write-index {output.vcf}"
+        "tabix -p vcf {output.vcfgz}"
+        "  >> {log.out} 2>> {log.err}\n"
+        "bcftools view -O z -f PASS -o {output.vcfpgz}"
+        "  >> {log.out} 2>> {log.err}\n"
+        "tabix -p vcf {output.vcfpgz}"
         "  >> {log.out} 2>> {log.err}\n"
         "cd .. \n"
-        "rm -rf tmp"
-        "  >> {log.out} 2>> {log.err}\n"
+        "echo 444444444 >> {log.out} \n"
+        "rm -rf tmp\n"
+        "echo 55555555 >> {log.out} \n"
 
 rule germline__gripss_germline:
     input:
@@ -782,6 +820,43 @@ rule germline__canvas:
         "rm -rf ref TempCNV"
         "  >> {log.out} 2>> {log.err}\n"
 
+rule germline__canvas_annot:
+    input:
+        vcf = join(config['workdir'], "17.germline_cnv_canvas", "{sample}", "CNV.vcf.gz"),
+        deepvariant = join( config['workdir'], "11.germline_snv_deepvariant", "{sample}", "{sample}.deepvariant.pass.vcf.gz" ),
+    output:
+        vcfp = join(config['workdir'], "17.germline_cnv_canvas", "{sample}", "CNV.pass.vcf.gz"),
+        annot = join(config['workdir'], "17.germline_cnv_canvas", "{sample}", "AnnotSV", "Canvas.CNV.pass.tsv"),
+    params:
+        annotdir = join(config['workdir'], "17.germline_cnv_canvas", "{sample}", "AnnotSV"),
+        annotfile1= "Canvas.CNV.pass",
+    log:
+        out = join(config['pipelinedir'], "logs", "germline__canvas_annot", "{sample}.o"),
+        err = join(config['pipelinedir'], "logs", "germline__canvas_annot", "{sample}.e"),
+    threads:
+        int(allocated("threads", "germline__canvas_annot", cluster))
+    container:
+        config['container']['annotsv']
+    shell:
+        "bcftools view -O z -W -f PASS -o {output.vcfp} {input.vcf}"
+        "  > {log.out} 2> {log.err}\n"
+        "AnnotSV "
+        "   -SVinputFile {output.vcfp} "
+        "   -annotationsDir {config[references][annotsv]} "
+        "   -bedtools bedtools "
+        "   -bcftools bcftools "
+        "   -annotationMode full "
+        "   -genomeBuild GRCh38 "
+        "   -includeCI 1 "
+        "   -overwrite 1 "
+        "   -outputFile {params.annotfile1} "
+        "   -outputDir {params.annotdir} "
+        "   -SVinputInfo 1 "
+        "   -SVminSize 50 "
+        "   -overlap 70 "
+        "   -snvIndelFiles {input.deepvariant} "
+        "   -snvIndelPASS 1 "
+        "  >> {log.out} 2>> {log.err}\n"
 
 rule germline__melt_ins:
     input:
@@ -809,6 +884,43 @@ rule germline__melt_ins:
         "  -w {params.prefix}"
         "  > {log.out} 2> {log.err}\n"
 
+rule germline__melt_ins_annot:
+    input:
+        vcf = join(config['workdir'], "21.germline_mei_melt", "{sample}", "ME_Insert", "LINE1.final_comp.vcf"),
+        deepvariant = join( config['workdir'], "11.germline_snv_deepvariant", "{sample}", "{sample}.deepvariant.pass.vcf.gz" ),
+    output:
+        vcfgz = join(config['workdir'], "21.germline_mei_melt", "{sample}", "ME_Insert", "LINE1.final_comp.vcf"),
+        annot = join(config['workdir'], "21.germline_mei_melt", "{sample}", "ME_Insert", "AnnotSV", "{sample}.LINE1.final_comp.tsv"),
+    params:
+        annotdir = join(config['workdir'], "21.germline_mei_melt", "{sample}", "ME_Insert", "AnnotSV"),
+        annotfile= "{sample}.LINE1.final_comp",
+    log:
+        out = join(config['pipelinedir'], "logs", "germline__melt_ins_annot", "{sample}.o"),
+        err = join(config['pipelinedir'], "logs", "germline__melt_ins_annot", "{sample}.e"),
+    threads:
+        int(allocated("threads", "germline__melt_ins_annot", cluster))
+    container:
+        config['container']['annotsv']
+    shell:
+        "bcftools view -O z -W -o {output.vcfgz} {input.vcf}"
+        "  > {log.out} 2> {log.err}\n"
+        "AnnotSV "
+        "   -SVinputFile {output.vcfgz} "
+        "   -annotationsDir {config[references][annotsv]} "
+        "   -bedtools bedtools "
+        "   -bcftools bcftools "
+        "   -annotationMode full "
+        "   -genomeBuild GRCh38 "
+        "   -includeCI 1 "
+        "   -overwrite 1 "
+        "   -outputFile {params.annotfile} "
+        "   -outputDir {params.annotdir} "
+        "   -SVinputInfo 1 "
+        "   -SVminSize 50 "
+        "   -overlap 70 "
+        "   -snvIndelFiles {input.deepvariant} "
+        "   -snvIndelPASS 1 "
+        "  >> {log.out} 2>> {log.err}\n"
 
 rule germline__melt_del1:
     input:
@@ -842,6 +954,43 @@ rule germline__melt_del1:
         "  -o {params.prefix}"
         "  >> {log.out} 2>> {log.err}\n"
 
+rule germline__melt_del1_annot:
+    input:
+        vcf = join(config['workdir'], "21.germline_mei_melt", "{sample}", "ME_Deletion_LINE1", "DEL.final_comp.vcf"),
+        deepvariant = join( config['workdir'], "11.germline_snv_deepvariant", "{sample}", "{sample}.deepvariant.pass.vcf.gz" ),
+    output:
+        vcfgz = join(config['workdir'], "21.germline_mei_melt", "{sample}", "ME_Deletion_LINE1", "DEL.final_comp.vcf"),
+        annot = join(config['workdir'], "21.germline_mei_melt", "{sample}", "ME_Deletion_LINE1", "AnnotSV", "{sample}.DEL.final_comp.tsv"),
+    params:
+        annotdir = join(config['workdir'], "21.germline_mei_melt", "{sample}", "ME_Deletion_LINE1", "AnnotSV"),
+        annotfile= "{sample}.DEL.final_comp",
+    log:
+        out = join(config['pipelinedir'], "logs", "germline__melt_del1_annot", "{sample}.o"),
+        err = join(config['pipelinedir'], "logs", "germline__melt_del1_annot", "{sample}.e"),
+    threads:
+        int(allocated("threads", "germline__melt_del1_annot", cluster))
+    container:
+        config['container']['annotsv']
+    shell:
+        "bcftools view -O z -W -o {output.vcfgz} {input.vcf}"
+        "  > {log.out} 2> {log.err}\n"
+        "AnnotSV "
+        "   -SVinputFile {output.vcfgz} "
+        "   -annotationsDir {config[references][annotsv]} "
+        "   -bedtools bedtools "
+        "   -bcftools bcftools "
+        "   -annotationMode full "
+        "   -genomeBuild GRCh38 "
+        "   -includeCI 1 "
+        "   -overwrite 1 "
+        "   -outputFile {params.annotfile} "
+        "   -outputDir {params.annotdir} "
+        "   -SVinputInfo 1 "
+        "   -SVminSize 50 "
+        "   -overlap 70 "
+        "   -snvIndelFiles {input.deepvariant} "
+        "   -snvIndelPASS 1 "
+        "  >> {log.out} 2>> {log.err}\n"
 
 rule germline__melt_del2:
     input:
@@ -875,6 +1024,43 @@ rule germline__melt_del2:
         "  -o {params.prefix}"
         "  >> {log.out} 2>> {log.err}\n"
 
+rule germline__melt_del2_annot:
+    input:
+        vcf = join(config['workdir'], "21.germline_mei_melt", "{sample}", "ME_Deletion_AluY", "DEL.final_comp.vcf"),
+        deepvariant = join( config['workdir'], "11.germline_snv_deepvariant", "{sample}", "{sample}.deepvariant.pass.vcf.gz" ),
+    output:
+        vcfgz = join(config['workdir'], "21.germline_mei_melt", "{sample}", "ME_Deletion_AluY", "DEL.final_comp.vcf"),
+        annot = join(config['workdir'], "21.germline_mei_melt", "{sample}", "ME_Deletion_AluY", "AnnotSV", "{sample}.DEL.final_comp.tsv"),
+    params:
+        annotdir = join(config['workdir'], "21.germline_mei_melt", "{sample}", "ME_Deletion_AluY", "AnnotSV"),
+        annotfile= "{sample}.DEL.final_comp",
+    log:
+        out = join(config['pipelinedir'], "logs", "germline__melt_del2_annot", "{sample}.o"),
+        err = join(config['pipelinedir'], "logs", "germline__melt_del2_annot", "{sample}.e"),
+    threads:
+        int(allocated("threads", "germline__melt_del2_annot", cluster))
+    container:
+        config['container']['annotsv']
+    shell:
+        "bcftools view -O z -W -o {output.vcfgz} {input.vcf}"
+        "  > {log.out} 2> {log.err}\n"
+        "AnnotSV "
+        "   -SVinputFile {output.vcfgz} "
+        "   -annotationsDir {config[references][annotsv]} "
+        "   -bedtools bedtools "
+        "   -bcftools bcftools "
+        "   -annotationMode full "
+        "   -genomeBuild GRCh38 "
+        "   -includeCI 1 "
+        "   -overwrite 1 "
+        "   -outputFile {params.annotfile} "
+        "   -outputDir {params.annotdir} "
+        "   -SVinputInfo 1 "
+        "   -SVminSize 50 "
+        "   -overlap 70 "
+        "   -snvIndelFiles {input.deepvariant} "
+        "   -snvIndelPASS 1 "
+        "  >> {log.out} 2>> {log.err}\n"
 
 rule germline__msi_msisensorpro:
     input:

@@ -77,7 +77,15 @@ rule all:
             sample=dic_sample_to_runs,
         ),
         expand(
+            join(config['workdir'], "13.germline_sv_manta", "{sample}", "AnnotSV", "{sample}.manta.germline.tsv"),
+            sample=dic_sample_to_runs,
+        )
+        expand(
             join(config['workdir'], "14.germline_sv_tiddit", "{sample}", "{sample}.tiddit.vcf"),
+            sample=dic_sample_to_runs,
+        ),
+        expand(
+            join(config['workdir'], "14.germline_sv_tiddit", "{sample}", "AnnotSV", "{sample}.tiddit.pass.tsv"),
             sample=dic_sample_to_runs,
         ),
         expand(
@@ -97,7 +105,15 @@ rule all:
             sample=dic_sample_to_runs,
         ),
         expand(
+            join(config['workdir'], "17.germline_cnv_canvas", "{sample}", "AnnotSV", "Canvas.CNV.pass.tsv"),
+            sample=dic_sample_to_runs,
+        ),
+        expand(
             join(config['workdir'], "21.germline_mei_melt", "{sample}", "ME_Insert", "LINE1.final_comp.vcf"),
+            sample=dic_sample_to_runs,
+        ),
+        expand(
+            join(config['workdir'], "21.germline_mei_melt", "{sample}", "ME_Insert", "AnnotSV", "{sample}.LINE1.final_comp.tsv"),
             sample=dic_sample_to_runs,
         ),
         expand(
@@ -105,7 +121,15 @@ rule all:
             sample=dic_sample_to_runs,
         ),
         expand(
+            join(config['workdir'], "21.germline_mei_melt", "{sample}", "ME_Deletion_LINE1", "AnnotSV", "{sample}.DEL.final_comp.tsv"),
+            sample=dic_sample_to_runs,
+        ),
+        expand(
             join(config['workdir'], "21.germline_mei_melt", "{sample}", "ME_Deletion_AluY", "DEL.final_comp.vcf"),
+            sample=dic_sample_to_runs,
+        ),
+        expand(
+            join(config['workdir'], "21.germline_mei_melt", "{sample}", "ME_Deletion_AluY", "AnnotSV", "{sample}.DEL.final_comp.tsv"),
             sample=dic_sample_to_runs,
         ),
         expand(
@@ -163,7 +187,15 @@ rule all:
             sample=[i[0] for i in tasks['somatic_paired']],
         ),
         expand(
+            join(config['workdir'], "34.somatic_sv_manta", "{sample}", "AnnotSV", "{sample}.manta.somatic.tsv"),
+            sample=[i[0] for i in tasks['somatic_paired']],
+        ),
+        expand(
             join(config['workdir'], "35.somatic_tn_sv__gridss", "{sample}", "{sample}.gripss.filtered.vcf.gz"),
+            sample=[i[0] for i in tasks['somatic_paired']],
+        ),
+        expand(
+            join(config['workdir'], "35.somatic_tn_sv__gridss", "{sample}", "AnnotSV", "{sample}.gripss.somatic.tsv"),
             sample=[i[0] for i in tasks['somatic_paired']],
         ),
         expand(
