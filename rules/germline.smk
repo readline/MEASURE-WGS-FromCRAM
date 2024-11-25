@@ -363,7 +363,8 @@ rule germline__genotyping:
           --truth-sensitivity-filter-level 99.7 \
           --create-output-variant-index true \
           -mode SNP >> {log.out} 2>> {log.err}
-        rm -rf {params.vqsrdir}
+        ls {params.vqsrdir} >> {log.out}
+        # rm -rf {params.vqsrdir}
         """
 
 rule germline__peddy:
@@ -619,6 +620,7 @@ rule germline__gridss_assemble:
     container:
         config['container']['gridss']
     shell:
+        "cd {params.workspace} > {log.out} 2> {log.err}\n"
         "gridss "
         "  -s assemble "
         "  -r {config[references][gatkbundle]}/Homo_sapiens_assembly38.fasta"
@@ -655,6 +657,7 @@ rule germline__gridss_call:
     container:
         config['container']['gridss']
     shell:
+        "cd {params.workspace} > {log.out} 2> {log.err}\n"
         "gridss "
         "  -s assemble,call "
         "  -r {config[references][gatkbundle]}/Homo_sapiens_assembly38.fasta"
@@ -838,6 +841,7 @@ rule germline__canvas_annot:
     container:
         config['container']['annotsv']
     shell:
+        "cd {params.annotdir}\n"
         "bcftools view -O z -W -f PASS -o {output.vcfp} {input.vcf}"
         "  > {log.out} 2> {log.err}\n"
         "AnnotSV "
@@ -857,12 +861,19 @@ rule germline__canvas_annot:
         "   -snvIndelFiles {input.deepvariant} "
         "   -snvIndelPASS 1 "
         "  >> {log.out} 2>> {log.err}\n"
+        "if [ ! -e {output.annot} ]; then\n"
+        "  touch {output.annot}\n"
+        "  touch {output.annot}.empty\n"
+        "fi\n"
 
 rule germline__melt_ins:
     input:
         cram = join(config['workdir'], "01.cram", "{sample}", "{sample}.cram"),
     output:
         vcf = join(config['workdir'], "21.germline_mei_melt", "{sample}", "ME_Insert", "LINE1.final_comp.vcf"),
+        vcf2 = join(config['workdir'], "21.germline_mei_melt", "{sample}", "ME_Insert", "ALU.final_comp.vcf"),
+        vcf3 = join(config['workdir'], "21.germline_mei_melt", "{sample}", "ME_Insert", "HERVK.final_comp.vcf"),
+        vcf4 = join(config['workdir'], "21.germline_mei_melt", "{sample}", "ME_Insert", "SVA.final_comp.vcf"),
     params:
         prefix = join(config['workdir'], "21.germline_mei_melt", "{sample}", "ME_Insert"),
     log:
@@ -887,22 +898,41 @@ rule germline__melt_ins:
 rule germline__melt_ins_annot:
     input:
         vcf = join(config['workdir'], "21.germline_mei_melt", "{sample}", "ME_Insert", "LINE1.final_comp.vcf"),
+        vcf2 = join(config['workdir'], "21.germline_mei_melt", "{sample}", "ME_Insert", "ALU.final_comp.vcf"),
+        vcf3 = join(config['workdir'], "21.germline_mei_melt", "{sample}", "ME_Insert", "HERVK.final_comp.vcf"),
+        vcf4 = join(config['workdir'], "21.germline_mei_melt", "{sample}", "ME_Insert", "SVA.final_comp.vcf"),
         deepvariant = join( config['workdir'], "11.germline_snv_deepvariant", "{sample}", "{sample}.deepvariant.pass.vcf.gz" ),
     output:
-        vcfgz = join(config['workdir'], "21.germline_mei_melt", "{sample}", "ME_Insert", "LINE1.final_comp.vcf"),
+        vcfgz = join(config['workdir'], "21.germline_mei_melt", "{sample}", "ME_Insert", "LINE1.final_comp.vcf.gz"),
+        vcf2gz = join(config['workdir'], "21.germline_mei_melt", "{sample}", "ME_Insert", "ALU.final_comp.vcf.gz"),
+        vcf3gz = join(config['workdir'], "21.germline_mei_melt", "{sample}", "ME_Insert", "HERVK.final_comp.vcf.gz"),
+        vcf4gz = join(config['workdir'], "21.germline_mei_melt", "{sample}", "ME_Insert", "SVA.final_comp.vcf.gz"),
         annot = join(config['workdir'], "21.germline_mei_melt", "{sample}", "ME_Insert", "AnnotSV", "{sample}.LINE1.final_comp.tsv"),
+        annot2 = join(config['workdir'], "21.germline_mei_melt", "{sample}", "ME_Insert", "AnnotSV", "{sample}.ALU.final_comp.tsv"),
+        annot3 = join(config['workdir'], "21.germline_mei_melt", "{sample}", "ME_Insert", "AnnotSV", "{sample}.HERVK.final_comp.tsv"),
+        annot4 = join(config['workdir'], "21.germline_mei_melt", "{sample}", "ME_Insert", "AnnotSV", "{sample}.SVA.final_comp.tsv"),
     params:
         annotdir = join(config['workdir'], "21.germline_mei_melt", "{sample}", "ME_Insert", "AnnotSV"),
         annotfile= "{sample}.LINE1.final_comp",
+        annotfile2= "{sample}.ALU.final_comp",
+        annotfile3= "{sample}.HERVK.final_comp",
+        annotfile4= "{sample}.SVA.final_comp",
     log:
         out = join(config['pipelinedir'], "logs", "germline__melt_ins_annot", "{sample}.o"),
         err = join(config['pipelinedir'], "logs", "germline__melt_ins_annot", "{sample}.e"),
     threads:
         int(allocated("threads", "germline__melt_ins_annot", cluster))
-    container:
+    container: 
         config['container']['annotsv']
     shell:
+        "cd {params.annotdir}\n"
         "bcftools view -O z -W -o {output.vcfgz} {input.vcf}"
+        "  > {log.out} 2> {log.err}\n"
+        "bcftools view -O z -W -o {output.vcf2gz} {input.vcf2}"
+        "  > {log.out} 2> {log.err}\n"
+        "bcftools view -O z -W -o {output.vcf3gz} {input.vcf3}"
+        "  > {log.out} 2> {log.err}\n"
+        "bcftools view -O z -W -o {output.vcf4gz} {input.vcf4}"
         "  > {log.out} 2> {log.err}\n"
         "AnnotSV "
         "   -SVinputFile {output.vcfgz} "
@@ -921,6 +951,73 @@ rule germline__melt_ins_annot:
         "   -snvIndelFiles {input.deepvariant} "
         "   -snvIndelPASS 1 "
         "  >> {log.out} 2>> {log.err}\n"
+        "AnnotSV "
+        "   -SVinputFile {output.vcf2gz} "
+        "   -annotationsDir {config[references][annotsv]} "
+        "   -bedtools bedtools "
+        "   -bcftools bcftools "
+        "   -annotationMode full "
+        "   -genomeBuild GRCh38 "
+        "   -includeCI 1 "
+        "   -overwrite 1 "
+        "   -outputFile {params.annotfile2} "
+        "   -outputDir {params.annotdir} "
+        "   -SVinputInfo 1 "
+        "   -SVminSize 50 "
+        "   -overlap 70 "
+        "   -snvIndelFiles {input.deepvariant} "
+        "   -snvIndelPASS 1 "
+        "  >> {log.out} 2>> {log.err}\n"
+        "AnnotSV "
+        "   -SVinputFile {output.vcf3gz} "
+        "   -annotationsDir {config[references][annotsv]} "
+        "   -bedtools bedtools "
+        "   -bcftools bcftools "
+        "   -annotationMode full "
+        "   -genomeBuild GRCh38 "
+        "   -includeCI 1 "
+        "   -overwrite 1 "
+        "   -outputFile {params.annotfile3} "
+        "   -outputDir {params.annotdir} "
+        "   -SVinputInfo 1 "
+        "   -SVminSize 50 "
+        "   -overlap 70 "
+        "   -snvIndelFiles {input.deepvariant} "
+        "   -snvIndelPASS 1 "
+        "  >> {log.out} 2>> {log.err}\n"
+        "AnnotSV "
+        "   -SVinputFile {output.vcf4gz} "
+        "   -annotationsDir {config[references][annotsv]} "
+        "   -bedtools bedtools "
+        "   -bcftools bcftools "
+        "   -annotationMode full "
+        "   -genomeBuild GRCh38 "
+        "   -includeCI 1 "
+        "   -overwrite 1 "
+        "   -outputFile {params.annotfile4} "
+        "   -outputDir {params.annotdir} "
+        "   -SVinputInfo 1 "
+        "   -SVminSize 50 "
+        "   -overlap 70 "
+        "   -snvIndelFiles {input.deepvariant} "
+        "   -snvIndelPASS 1 "
+        "  >> {log.out} 2>> {log.err}\n"
+        "if [ ! -e {output.annot} ]; then\n"
+        "  touch {output.annot}\n"
+        "  touch {output.annot}.empty\n"
+        "fi\n"
+        "if [ ! -e {output.annot2} ]; then\n"
+        "  touch {output.annot2}\n"
+        "  touch {output.annot2}.empty\n"
+        "fi\n"
+        "if [ ! -e {output.annot3} ]; then\n"
+        "  touch {output.annot3}\n"
+        "  touch {output.annot3}.empty\n"
+        "fi\n"
+        "if [ ! -e {output.annot4} ]; then\n"
+        "  touch {output.annot4}\n"
+        "  touch {output.annot4}.empty\n"
+        "fi\n"
 
 rule germline__melt_del1:
     input:
@@ -959,7 +1056,7 @@ rule germline__melt_del1_annot:
         vcf = join(config['workdir'], "21.germline_mei_melt", "{sample}", "ME_Deletion_LINE1", "DEL.final_comp.vcf"),
         deepvariant = join( config['workdir'], "11.germline_snv_deepvariant", "{sample}", "{sample}.deepvariant.pass.vcf.gz" ),
     output:
-        vcfgz = join(config['workdir'], "21.germline_mei_melt", "{sample}", "ME_Deletion_LINE1", "DEL.final_comp.vcf"),
+        vcfgz = join(config['workdir'], "21.germline_mei_melt", "{sample}", "ME_Deletion_LINE1", "DEL.final_comp.vcf.gz"),
         annot = join(config['workdir'], "21.germline_mei_melt", "{sample}", "ME_Deletion_LINE1", "AnnotSV", "{sample}.DEL.final_comp.tsv"),
     params:
         annotdir = join(config['workdir'], "21.germline_mei_melt", "{sample}", "ME_Deletion_LINE1", "AnnotSV"),
@@ -972,6 +1069,7 @@ rule germline__melt_del1_annot:
     container:
         config['container']['annotsv']
     shell:
+        "cd {params.annotdir}\n"
         "bcftools view -O z -W -o {output.vcfgz} {input.vcf}"
         "  > {log.out} 2> {log.err}\n"
         "AnnotSV "
@@ -991,6 +1089,10 @@ rule germline__melt_del1_annot:
         "   -snvIndelFiles {input.deepvariant} "
         "   -snvIndelPASS 1 "
         "  >> {log.out} 2>> {log.err}\n"
+        "if [ ! -e {output.annot} ]; then\n"
+        "  touch {output.annot}\n"
+        "  touch {output.annot}.empty\n"
+        "fi\n"
 
 rule germline__melt_del2:
     input:
@@ -1029,7 +1131,7 @@ rule germline__melt_del2_annot:
         vcf = join(config['workdir'], "21.germline_mei_melt", "{sample}", "ME_Deletion_AluY", "DEL.final_comp.vcf"),
         deepvariant = join( config['workdir'], "11.germline_snv_deepvariant", "{sample}", "{sample}.deepvariant.pass.vcf.gz" ),
     output:
-        vcfgz = join(config['workdir'], "21.germline_mei_melt", "{sample}", "ME_Deletion_AluY", "DEL.final_comp.vcf"),
+        vcfgz = join(config['workdir'], "21.germline_mei_melt", "{sample}", "ME_Deletion_AluY", "DEL.final_comp.vcf.gz"),
         annot = join(config['workdir'], "21.germline_mei_melt", "{sample}", "ME_Deletion_AluY", "AnnotSV", "{sample}.DEL.final_comp.tsv"),
     params:
         annotdir = join(config['workdir'], "21.germline_mei_melt", "{sample}", "ME_Deletion_AluY", "AnnotSV"),
@@ -1042,8 +1144,15 @@ rule germline__melt_del2_annot:
     container:
         config['container']['annotsv']
     shell:
-        "bcftools view -O z -W -o {output.vcfgz} {input.vcf}"
+        "cd {params.annotdir}\n"
+        """sed -i '/##FORMAT=<ID=GL,Number=3,Type=Float,Description="Genotype likelihood">/ {{
+    s/##FORMAT=<ID=GL,Number=3,Type=Float,Description="Genotype likelihood">/##FORMAT=<ID=GL,Number=G,Type=Float,Description="Genotype likelihood">/
+    a\
+##INFO=<ID=SVLEN,Number=1,Type=Integer,Description="Difference in length between REF and ALT alleles; If unknown, will be -1">
+}}' {input.vcf}"""
         "  > {log.out} 2> {log.err}\n"
+        "bcftools sort -O z -W -o {output.vcfgz} {input.vcf}"
+        "  >> {log.out} 2>> {log.err}\n"
         "AnnotSV "
         "   -SVinputFile {output.vcfgz} "
         "   -annotationsDir {config[references][annotsv]} "
@@ -1061,7 +1170,11 @@ rule germline__melt_del2_annot:
         "   -snvIndelFiles {input.deepvariant} "
         "   -snvIndelPASS 1 "
         "  >> {log.out} 2>> {log.err}\n"
-
+        "if [ ! -e {output.annot} ]; then\n"
+        "  touch {output.annot}\n"
+        "  touch {output.annot}.empty\n"
+        "fi\n"
+        
 rule germline__msi_msisensorpro:
     input:
         cram = join(config['workdir'], "01.cram", "{sample}", "{sample}.cram"),
@@ -1087,7 +1200,7 @@ rule germline__msi_msisensorpro:
 
 rule germline__hlala:
     input:
-        bam    = join(config['workdir'], "02.bam", "{sample}", "{sample}.bam"),
+        cram = join(config['workdir'], "01.cram", "{sample}", "{sample}.cram"),
     output:
         txt = join(config['workdir'], "25.germline_hla-la", "{sample}", "hla", "summaryStatistics.txt"),
     params: 
@@ -1104,10 +1217,11 @@ rule germline__hlala:
     shell:
         "singularity exec -B {params.bind} {params.sif} "
         "  HLA-LA.pl "
-        "  --BAM {input.bam} "
+        "  --BAM {input.cram} "
         "  --graph PRG_MHC_GRCh38_withIMGT "
         "  --sampleID {params.sample} "
         "  --maxThreads {threads} "
         "  --workingDir {params.outdir}"
         "  >> {log.out} 2>> {log.err}\n"
+        "cd {params.outdir}/{params.sample} && rm extraction* *.fastq reads_per_level.txt remapped_with_a.bam*"
 

@@ -361,9 +361,9 @@ rule somatic_ss__dellysv:
 rule somatic_ss__dellysv_joint:
     input:
         crams = lambda wildcards: 
-            ["{}/01.cram/{}/{}.cram".format(config['workdir'], sample, sample) for sample in tasks['somatic_ss']+[i[0] for i in tasks['somatic_paired']]],
+            ["{}/01.cram/{}/{}.cram".format(config['workdir'], sample, sample) for sample in tasks['somatic_ss']+[i[0] for i in tasks['somatic_ss']]],
         bcfs = lambda wildcards: 
-            ["{}/45.somatic_ss_sv__delly/{}/{}.delly.bcf".format(config['workdir'], sample, sample) for sample in tasks['somatic_ss']+[i[0] for i in tasks['somatic_paired']]],
+            ["{}/45.somatic_ss_sv__delly/{}/{}.delly.bcf".format(config['workdir'], sample, sample) for sample in tasks['somatic_ss']+[i[0] for i in tasks['somatic_ss']]],
     output:
         premerge = join(config['workdir'], "45.somatic_ss_sv__delly", "JointCalls", "Merge.delly.pre.bcf"),
         genobcf = join(config['workdir'], "45.somatic_ss_sv__delly", "JointCalls", "Merge.delly.geno.bcf"),

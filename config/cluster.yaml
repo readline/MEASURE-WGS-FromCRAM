@@ -187,10 +187,10 @@ germline__gridss_preprocess:
     extra: ' --gres=lscratch:50'
 
 germline__gridss_assemble:
-    partition: 'norm'
+    partition: 'norm,quick'
     threads: 8
     mem: '48g'
-    time: '2-00:00:00'
+    time: '04:00:00'
     extra: ' --gres=lscratch:50'
 
 germline__gridss_call:
@@ -201,17 +201,17 @@ germline__gridss_call:
     extra: ' --gres=lscratch:50'
 
 germline__gridss_virusbreakend:
-    partition: 'norm,quick'
+    partition: 'norm'
     threads: 32
     mem: '64g'
     time: '2-00:00:00'
     extra: ' --gres=lscratch:50'
 
 germline__gripss_germline:
-    partition: 'norm'
+    partition: 'norm,quick'
     threads: 8
-    mem: '32g'
-    time: '2-00:00:00'
+    mem: '48g'
+    time: '04:00:00'
     extra: ' --gres=lscratch:50'
 
 germline__gridss_annot:
@@ -225,8 +225,8 @@ germline__tiddit:
     partition: 'largemem'
     threads: 56
     mem: '512g'
-    time: '2-00:00:00'
-    extra: ' --gres=lscratch:50'
+    time: '10-00:00:00'
+    extra: ' --gres=lscratch:50 '
 
 germline__tiddit_annot:
     partition: 'norm,quick'
@@ -236,10 +236,10 @@ germline__tiddit_annot:
     extra: ' --gres=lscratch:50'
 
 germline__canvas:
-    partition: 'norm'
+    partition: 'norm,quick'
     threads: 16
     mem: '64g'
-    time: '2-00:00:00'
+    time: '04:00:00'
     extra: ' --gres=lscratch:50'
 
 germline__canvas_annot:
@@ -254,7 +254,7 @@ germline__melt_ins:
     threads: 4
     mem: '48g'
     time: '2-00:00:00'
-    extra: ' --gres=lscratch:50'
+    extra: ' --gres=lscratch:50 --constraint=e7543'
 
 germline__melt_ins_annot:
     partition: 'norm,quick'
@@ -323,8 +323,8 @@ somatic_ss__octopus_split:
     partition: 'norm'
     threads: 32
     mem: '64g'
-    time: '2-00:00:00'
-    extra: ' --gres=lscratch:100'
+    time: '10-00:00:00'
+    extra: ' --gres=lscratch:100 --constraint=e7543'
 
 somatic_ss__octopus_merge:
     partition: 'norm'
@@ -351,14 +351,14 @@ somatic_ss__dellysv:
     partition: 'norm'
     threads: 4
     mem: '48g'
-    time: '2-00:00:00'
-    extra: ' --gres=lscratch:50'
+    time: '10-00:00:00'
+    extra: ' --gres=lscratch:50 --constraint=e7543'
 
 somatic_ss__dellysv_joint:
     partition: 'norm'
     threads: 32
     mem: '192g'
-    time: '2-00:00:00'
+    time: '10-00:00:00'
     extra: ' --gres=lscratch:50 --constraint=e7543'
 
 somatic_ss__dellysv_post:
@@ -478,7 +478,7 @@ somatic_tn__muse_sump:
     threads: 32
     mem: '64g'
     time: '2-00:00:00'
-    extra: ' --gres=lscratch:50'
+    extra: ' --gres=lscratch:50 --constraint=e7543'
 
 somatic_tn_gridss_prep:
     partition: 'norm,quick'
@@ -525,7 +525,7 @@ somatic_tn__dellysv:
     threads: 4
     mem: '48g'
     time: '2-00:00:00'
-    extra: ' --gres=lscratch:50'
+    extra: ' --gres=lscratch:50 --constraint=e7543'
 
 somatic_tn__dellysv_joint:
     partition: 'norm'
